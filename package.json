@@ -1,0 +1,15 @@
+{
+  "name": "clawteam",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "db:migrate": "npm run migrate -w apps/api",
+    "create-admin": "npm run create-admin -w apps/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  }
+}

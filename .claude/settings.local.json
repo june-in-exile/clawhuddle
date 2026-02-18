@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(docker:*)",
+      "Bash(docker compose:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
