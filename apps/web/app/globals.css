@@ -1,26 +1,129 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── Surfaces ── */
+  --bg-base: #0B0E13;
+  --bg-primary: #10141B;
+  --bg-secondary: #161B25;
+  --bg-tertiary: #1C222E;
+  --bg-hover: #232A38;
+  --bg-input: #141921;
+
+  /* ── Borders ── */
+  --border-primary: #252D3D;
+  --border-subtle: #1C2231;
+  --border-focus: #C7944A;
+
+  /* ── Text ── */
+  --text-primary: #E4E8F0;
+  --text-secondary: #8893A7;
+  --text-tertiary: #556178;
+  --text-inverse: #0B0E13;
+
+  /* ── Accent (Copper-Amber) ── */
+  --accent: #C7944A;
+  --accent-hover: #D9A85E;
+  --accent-muted: rgba(199, 148, 74, 0.12);
+  --accent-text: #E8C078;
+
+  /* ── Status ── */
+  --green: #34D399;
+  --green-muted: rgba(52, 211, 153, 0.12);
+  --yellow: #FBBF24;
+  --yellow-muted: rgba(251, 191, 36, 0.12);
+  --red: #F87171;
+  --red-muted: rgba(248, 113, 113, 0.12);
+  --blue: #60A5FA;
+  --blue-muted: rgba(96, 165, 250, 0.12);
+  --purple: #A78BFA;
+  --purple-muted: rgba(167, 139, 250, 0.12);
+
+  /* ── Misc ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ── */
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Selection ── */
+::selection {
+  background: var(--accent-muted);
+  color: var(--accent-text);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* ── Focus ring ── */
+*:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Shared input styling ── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"] {
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input::placeholder {
+  color: var(--text-tertiary);
+}
+
+input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+  outline: none;
+}
+
+/* ── Pulse animation for deploying state ── */
+@keyframes pulse-amber {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-amber {
+  animation: pulse-amber 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

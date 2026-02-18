@@ -5,6 +5,7 @@ import {
   stopGateway,
   startGateway,
   removeGateway,
+  redeployGateway,
   getGatewayStatus,
 } from '../../services/gateway.js';
 
@@ -70,6 +71,20 @@ export async function adminGatewayRoutes(app: FastifyInstance) {
       const { id } = request.params;
       try {
         const result = await stopGateway(id);
+        return { data: result };
+      } catch (err: any) {
+        return reply.status(400).send({ error: 'gateway_error', message: err.message });
+      }
+    }
+  );
+
+  // Redeploy gateway (update config/env without losing workspace data)
+  app.post<{ Params: { id: string } }>(
+    '/api/admin/users/:id/gateway/redeploy',
+    async (request, reply) => {
+      const { id } = request.params;
+      try {
+        const result = await redeployGateway(id);
         return { data: result };
       } catch (err: any) {
         return reply.status(400).send({ error: 'gateway_error', message: err.message });

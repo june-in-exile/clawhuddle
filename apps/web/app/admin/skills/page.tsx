@@ -18,7 +18,12 @@ export default async function SkillsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Skills</h1>
+      <h1
+        className="text-xl font-semibold tracking-tight mb-6"
+        style={{ color: 'var(--text-primary)' }}
+      >
+        Skills
+      </h1>
       <SkillTable initialSkills={skills} />
     </div>
   );

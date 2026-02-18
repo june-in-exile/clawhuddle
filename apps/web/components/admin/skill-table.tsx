@@ -8,6 +8,44 @@ interface Props {
   initialSkills: Skill[];
 }
 
+function Badge({ color, children }: { color: 'green' | 'red' | 'yellow' | 'blue' | 'gray'; children: React.ReactNode }) {
+  const styles: Record<string, { bg: string; text: string }> = {
+    green:  { bg: 'var(--green-muted)',  text: 'var(--green)' },
+    red:    { bg: 'var(--red-muted)',    text: 'var(--red)' },
+    yellow: { bg: 'var(--yellow-muted)', text: 'var(--yellow)' },
+    blue:   { bg: 'var(--blue-muted)',   text: 'var(--blue)' },
+    gray:   { bg: 'var(--bg-tertiary)',  text: 'var(--text-tertiary)' },
+  };
+  const s = styles[color];
+  return (
+    <span
+      className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium"
+      style={{ background: s.bg, color: s.text }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function ActionBtn({ onClick, color = 'default', children }: { onClick: () => void; color?: 'default' | 'danger'; children: React.ReactNode }) {
+  const colorMap = {
+    default: { normal: 'var(--accent)', hover: 'var(--accent-hover)' },
+    danger:  { normal: 'var(--red)',    hover: '#fca5a5' },
+  };
+  const c = colorMap[color];
+  return (
+    <button
+      onClick={onClick}
+      className="text-xs font-medium transition-colors"
+      style={{ color: c.normal }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = c.hover; }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = c.normal; }}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function SkillTable({ initialSkills }: Props) {
   const [skills, setSkills] = useState(initialSkills);
   const [name, setName] = useState('');
@@ -51,79 +89,114 @@ export function SkillTable({ initialSkills }: Props) {
     await refresh();
   };
 
-  const typeColors: Record<string, string> = {
-    mandatory: 'bg-red-100 text-red-700',
-    optional: 'bg-blue-100 text-blue-700',
-    restricted: 'bg-yellow-100 text-yellow-700',
+  const typeColors: Record<string, 'red' | 'blue' | 'yellow'> = {
+    mandatory: 'red',
+    optional: 'blue',
+    restricted: 'yellow',
   };
 
   return (
     <div>
+      {/* Add skill form */}
       <div className="flex gap-2 mb-6">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Skill name"
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 text-sm rounded-lg"
         />
         <input
           value={path}
           onChange={(e) => setPath(e.target.value)}
           placeholder="Path (e.g. web-search)"
-          className="flex-1 max-w-sm px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 max-w-sm px-3 py-2 text-sm rounded-lg"
         />
         <button
           onClick={addSkill}
           disabled={adding}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+          style={{
+            background: 'var(--accent)',
+            color: 'var(--text-inverse)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--accent)'; }}
         >
           Add Skill
         </button>
       </div>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200 text-left text-gray-500">
-            <th className="pb-3 font-medium">Name</th>
-            <th className="pb-3 font-medium">Path</th>
-            <th className="pb-3 font-medium">Type</th>
-            <th className="pb-3 font-medium">Status</th>
-            <th className="pb-3 font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {skills.map((skill) => (
-            <tr key={skill.id}>
-              <td className="py-3 font-medium">{skill.name}</td>
-              <td className="py-3 text-gray-600 font-mono text-xs">{skill.path}</td>
-              <td className="py-3">
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeColors[skill.type] || ''}`}>
-                  {skill.type}
-                </span>
-              </td>
-              <td className="py-3">
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  skill.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {skill.enabled ? 'enabled' : 'disabled'}
-                </span>
-              </td>
-              <td className="py-3 space-x-2">
-                <button onClick={() => toggleEnabled(skill)} className="text-sm text-blue-600 hover:underline">
-                  {skill.enabled ? 'Disable' : 'Enable'}
-                </button>
-                <button onClick={() => deleteSkill(skill)} className="text-sm text-red-600 hover:underline">
-                  Delete
-                </button>
-              </td>
+      {/* Table */}
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-subtle)',
+        }}
+      >
+        <table className="w-full text-sm">
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border-primary)' }}>
+              {['Name', 'Path', 'Type', 'Status', 'Actions'].map((h) => (
+                <th
+                  key={h}
+                  className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {skills.map((skill, i) => (
+              <tr
+                key={skill.id}
+                className="transition-colors"
+                style={{
+                  borderBottom: i < skills.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {skill.name}
+                </td>
+                <td className="px-4 py-3 font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {skill.path}
+                </td>
+                <td className="px-4 py-3">
+                  <Badge color={typeColors[skill.type] || 'gray'}>
+                    {skill.type}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge color={skill.enabled ? 'green' : 'gray'}>
+                    {skill.enabled ? 'enabled' : 'disabled'}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3 space-x-3">
+                  <ActionBtn onClick={() => toggleEnabled(skill)}>
+                    {skill.enabled ? 'Disable' : 'Enable'}
+                  </ActionBtn>
+                  <ActionBtn onClick={() => deleteSkill(skill)} color="danger">
+                    Delete
+                  </ActionBtn>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      {skills.length === 0 && (
-        <p className="text-center text-gray-400 py-8">No skills configured</p>
-      )}
+        {skills.length === 0 && (
+          <p
+            className="text-center py-12 text-sm"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            No skills configured
+          </p>
+        )}
+      </div>
     </div>
   );
 }

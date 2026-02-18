@@ -45,56 +45,60 @@ export function ApiKeyForm({ initialKeys }: Props) {
   const currentKey = (provider: string) => keys.find((k) => k.provider === provider);
 
   return (
-    <div className="space-y-8 max-w-lg">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Anthropic</h3>
-        {currentKey('anthropic') && (
-          <p className="text-sm text-gray-500 mb-2">
-            Current: <code className="bg-gray-100 px-1 rounded">{currentKey('anthropic')!.key_masked}</code>
-          </p>
-        )}
-        <div className="flex gap-2">
-          <input
-            type="password"
-            value={anthropicKey}
-            onChange={(e) => setAnthropicKey(e.target.value)}
-            placeholder="sk-ant-..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={() => saveKey('anthropic', anthropicKey, setAnthropicKey)}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+    <div className="space-y-6 max-w-lg">
+      {[
+        { provider: 'anthropic', label: 'Anthropic', placeholder: 'sk-ant-...', value: anthropicKey, setter: setAnthropicKey },
+        { provider: 'openai', label: 'OpenAI', placeholder: 'sk-...', value: openaiKey, setter: setOpenaiKey },
+      ].map(({ provider, label, placeholder, value, setter }) => (
+        <div
+          key={provider}
+          className="p-5 rounded-xl"
+          style={{
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-subtle)',
+          }}
+        >
+          <h3
+            className="text-sm font-semibold mb-1"
+            style={{ color: 'var(--text-primary)' }}
           >
-            Save
-          </button>
+            {label}
+          </h3>
+          {currentKey(provider) && (
+            <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
+              Current:{' '}
+              <code
+                className="px-1.5 py-0.5 rounded text-[11px] font-mono"
+                style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+              >
+                {currentKey(provider)!.key_masked}
+              </code>
+            </p>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={value}
+              onChange={(e) => setter(e.target.value)}
+              placeholder={placeholder}
+              className="flex-1 px-3 py-2 text-sm rounded-lg"
+            />
+            <button
+              onClick={() => saveKey(provider, value, setter)}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+              style={{
+                background: 'var(--accent)',
+                color: 'var(--text-inverse)',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--accent)'; }}
+            >
+              Save
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">OpenAI</h3>
-        {currentKey('openai') && (
-          <p className="text-sm text-gray-500 mb-2">
-            Current: <code className="bg-gray-100 px-1 rounded">{currentKey('openai')!.key_masked}</code>
-          </p>
-        )}
-        <div className="flex gap-2">
-          <input
-            type="password"
-            value={openaiKey}
-            onChange={(e) => setOpenaiKey(e.target.value)}
-            placeholder="sk-..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={() => saveKey('openai', openaiKey, setOpenaiKey)}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-          >
-            Save
-          </button>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

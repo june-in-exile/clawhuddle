@@ -14,7 +14,7 @@ export interface User {
   role: 'admin' | 'member';
   status: 'active' | 'disabled';
   gateway_port: number | null;
-  gateway_status: 'running' | 'stopped' | 'provisioning' | null;
+  gateway_status: 'running' | 'stopped' | 'deploying' | 'provisioning' | null;
   gateway_token: string | null;
   created_at: string;
   last_login: string | null;
@@ -104,5 +104,5 @@ export interface ApiError {
 export interface GatewayActionResponse {
   userId: string;
   gateway_port: number | null;
-  gateway_status: 'running' | 'stopped' | 'provisioning' | null;
+  gateway_status: 'running' | 'stopped' | 'deploying' | 'provisioning' | null;
 }

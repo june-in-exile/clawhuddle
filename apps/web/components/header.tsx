@@ -2,31 +2,100 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Header() {
   const { data: session } = useSession();
+  const pathname = usePathname();
+  const isAdmin = (session?.user as any)?.role === 'admin';
 
   return (
-    <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-4">
-      <Link href="/chat" className="text-lg font-semibold text-gray-900">
-        ClawTeam
-      </Link>
-      <div className="flex items-center gap-3">
-        {(session?.user as any)?.role === 'admin' && (
-          <Link href="/admin" className="text-sm text-gray-600 hover:text-gray-900">
-            Admin
-          </Link>
-        )}
-        <Link href="/settings" className="text-sm text-gray-600 hover:text-gray-900">
-          Settings
+    <header
+      className="h-14 flex items-center justify-between px-5"
+      style={{
+        background: 'var(--bg-primary)',
+        borderBottom: '1px solid var(--border-subtle)',
+      }}
+    >
+      <div className="flex items-center gap-6">
+        <Link
+          href="/chat"
+          className="flex items-center gap-2 font-semibold text-[15px] tracking-tight"
+          style={{ color: 'var(--accent)' }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          ClawTeam
         </Link>
+
+        <nav className="flex items-center gap-1">
+          <NavLink href="/chat" active={pathname.startsWith('/chat')}>
+            Chat
+          </NavLink>
+          {isAdmin && (
+            <NavLink href="/admin" active={pathname.startsWith('/admin')}>
+              Admin
+            </NavLink>
+          )}
+          <NavLink href="/settings" active={pathname === '/settings'}>
+            Settings
+          </NavLink>
+        </nav>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          {session?.user?.email}
+        </span>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="text-xs px-3 py-1.5 rounded-md transition-colors"
+          style={{
+            color: 'var(--text-secondary)',
+            background: 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--bg-hover)';
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--text-secondary)';
+          }}
         >
           Sign out
         </button>
       </div>
     </header>
+  );
+}
+
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="text-[13px] font-medium px-3 py-1.5 rounded-md transition-colors"
+      style={{
+        color: active ? 'var(--accent-text)' : 'var(--text-secondary)',
+        background: active ? 'var(--accent-muted)' : 'transparent',
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.background = 'var(--bg-hover)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.color = 'var(--text-secondary)';
+          e.currentTarget.style.background = 'transparent';
+        }
+      }}
+    >
+      {children}
+    </Link>
   );
 }

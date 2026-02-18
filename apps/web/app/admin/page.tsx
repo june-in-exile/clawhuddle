@@ -18,7 +18,12 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Employees</h1>
+      <h1
+        className="text-xl font-semibold tracking-tight mb-6"
+        style={{ color: 'var(--text-primary)' }}
+      >
+        Employees
+      </h1>
       <UserTable initialUsers={users} />
     </div>
   );
