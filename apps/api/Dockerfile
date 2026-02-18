@@ -18,4 +18,4 @@ COPY --from=builder /app/apps/api/package.json ./
 COPY --from=builder /app/apps/api/src/db/schema.sql ./dist/db/schema.sql
 COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 4000
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
