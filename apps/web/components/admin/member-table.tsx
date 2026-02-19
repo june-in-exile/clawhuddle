@@ -186,8 +186,13 @@ export function MemberTable({ initialMembers, tier = 'free' }: Props) {
   };
 
   const openGateway = (member: OrgMember) => {
-    const hostname = window.location.hostname;
-    window.open(`http://${hostname}:${member.gateway_port}/?token=${member.gateway_token}`, '_blank');
+    if (member.gateway_subdomain) {
+      const base = window.location.hostname;
+      window.open(`https://${member.gateway_subdomain}.${base}/?token=${member.gateway_token}`, '_blank');
+    } else {
+      const hostname = window.location.hostname;
+      window.open(`http://${hostname}:${member.gateway_port}/?token=${member.gateway_token}`, '_blank');
+    }
   };
 
   const gatewayStatusBadge = (member: OrgMember) => {
@@ -219,7 +224,12 @@ export function MemberTable({ initialMembers, tier = 'free' }: Props) {
     }
 
     if (member.gateway_status === 'deploying') {
-      return <span className="text-xs" style={{ color: 'var(--blue)' }}>starting up...</span>;
+      return (
+        <span className="flex gap-3 items-center">
+          <span className="text-xs" style={{ color: 'var(--blue)' }}>starting up...</span>
+          <ActionBtn onClick={() => gatewayAction(member.id, 'remove')} color="danger">Remove</ActionBtn>
+        </span>
+      );
     }
 
     if (member.gateway_status === 'running') {

@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import crypto from 'node:crypto';
 import dotenv from 'dotenv';
 dotenv.config({ path: '../../.env' });
 import { authRoutes } from './routes/auth.js';
@@ -12,8 +13,27 @@ import { orgGatewayRoutes } from './routes/org/gateways.js';
 import { orgUserSkillRoutes } from './routes/org/user-skills.js';
 import { orgChatRoutes } from './routes/org/chat.js';
 import { superAdminRoutes } from './routes/super-admin.js';
+import { getDb } from './db/index.js';
+import { ensureNginxMapFile, regenerateNginxMap } from './services/nginx-map.js';
 
 const app = Fastify({ logger: true });
+
+// Ensure nginx map file exists and backfill subdomains for existing gateways
+ensureNginxMapFile();
+{
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT id FROM org_members WHERE gateway_port IS NOT NULL AND gateway_subdomain IS NULL'
+  ).all() as { id: string }[];
+  if (rows.length > 0) {
+    const stmt = db.prepare('UPDATE org_members SET gateway_subdomain = ? WHERE id = ?');
+    for (const row of rows) {
+      stmt.run(crypto.randomBytes(4).toString('hex'), row.id);
+    }
+    console.log(`Backfilled gateway_subdomain for ${rows.length} members`);
+  }
+  await regenerateNginxMap();
+}
 
 await app.register(cors, { origin: true, credentials: true });
 

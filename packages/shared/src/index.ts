@@ -33,6 +33,7 @@ export interface OrgMember {
   gateway_port: number | null;
   gateway_status: 'running' | 'stopped' | 'deploying' | 'provisioning' | null;
   gateway_token: string | null;
+  gateway_subdomain: string | null;
   joined_at: string;
   email?: string;
   name?: string;

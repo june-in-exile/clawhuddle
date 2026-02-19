@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS org_members (
     gateway_port INTEGER,
     gateway_status TEXT,
     gateway_token TEXT,
+    gateway_subdomain TEXT,
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(org_id, user_id)
 );

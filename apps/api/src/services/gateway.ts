@@ -6,6 +6,7 @@ import { getDb } from '../db/index.js';
 import { getOrgApiKey } from '../routes/org/api-keys.js';
 import { generateOpenClawConfig } from './openclaw-config.js';
 import { installSkillsForUser } from './skill-installer.js';
+import { regenerateNginxMap } from './nginx-map.js';
 import type { Skill, OrgMember } from '@clawhuddle/shared';
 
 const docker = new Docker();
@@ -61,6 +62,10 @@ function allocatePort(): number {
   return (row.max_port || PORT_START - 1) + 1;
 }
 
+function generateSubdomain(): string {
+  return crypto.randomBytes(4).toString('hex');
+}
+
 function getMember(orgId: string, memberId: string): OrgMember & { user_id: string } {
   const db = getDb();
   const member = db.prepare(
@@ -93,9 +98,10 @@ export async function provisionGateway(orgId: string, memberId: string) {
   const anthropicApiKey = getOrgApiKey(orgId, 'anthropic');
   if (!anthropicApiKey) throw new Error('No Anthropic API key configured');
 
-  // Allocate port and generate token
+  // Allocate port, generate token and subdomain
   const port = allocatePort();
   const token = crypto.randomBytes(24).toString('hex');
+  const subdomain = generateSubdomain();
 
   // Get member's skills
   const skills = getMemberSkills(orgId, member.user_id);
@@ -111,10 +117,10 @@ export async function provisionGateway(orgId: string, memberId: string) {
   // Install skill directories (still keyed by userId for filesystem)
   await installSkillsForUser(path.join(orgId, member.user_id), skills);
 
-  // Update DB with provisioning status + token
+  // Update DB with provisioning status + token + subdomain
   db.prepare(
-    'UPDATE org_members SET gateway_port = ?, gateway_status = ?, gateway_token = ? WHERE id = ?'
-  ).run(port, 'provisioning', token, memberId);
+    'UPDATE org_members SET gateway_port = ?, gateway_status = ?, gateway_token = ?, gateway_subdomain = ? WHERE id = ?'
+  ).run(port, 'provisioning', token, subdomain, memberId);
 
   try {
     // Create and start Docker container
@@ -145,11 +151,13 @@ export async function provisionGateway(orgId: string, memberId: string) {
     // Mark as deploying — getGatewayStatus will promote to running after health check
     db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run('deploying', memberId);
 
-    return { memberId, userId: member.user_id, gateway_port: port, gateway_status: 'deploying' as const };
+    await regenerateNginxMap();
+
+    return { memberId, userId: member.user_id, gateway_port: port, gateway_status: 'deploying' as const, gateway_subdomain: subdomain };
   } catch (err) {
     // Rollback DB on failure
     db.prepare(
-      'UPDATE org_members SET gateway_port = NULL, gateway_status = NULL WHERE id = ?'
+      'UPDATE org_members SET gateway_port = NULL, gateway_status = NULL, gateway_subdomain = NULL WHERE id = ?'
     ).run(memberId);
     throw err;
   }
@@ -205,10 +213,12 @@ export async function removeGateway(orgId: string, memberId: string) {
 
   // Reset DB fields
   db.prepare(
-    'UPDATE org_members SET gateway_port = NULL, gateway_status = NULL, gateway_token = NULL WHERE id = ?'
+    'UPDATE org_members SET gateway_port = NULL, gateway_status = NULL, gateway_token = NULL, gateway_subdomain = NULL WHERE id = ?'
   ).run(memberId);
 
-  return { memberId, userId: member.user_id, gateway_port: null, gateway_status: null };
+  await regenerateNginxMap();
+
+  return { memberId, userId: member.user_id, gateway_port: null, gateway_status: null, gateway_subdomain: null };
 }
 
 export async function redeployGateway(orgId: string, memberId: string) {
@@ -254,6 +264,8 @@ export async function redeployGateway(orgId: string, memberId: string) {
   await container.start();
   db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run('deploying', memberId);
 
+  await regenerateNginxMap();
+
   return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: 'deploying' as const };
 }
 
@@ -261,7 +273,7 @@ export async function getGatewayStatus(orgId: string, memberId: string) {
   const db = getDb();
   const member = getMember(orgId, memberId);
   if (!member.gateway_port) {
-    return { memberId, userId: member.user_id, gateway_port: null, gateway_status: null };
+    return { memberId, userId: member.user_id, gateway_port: null, gateway_status: null, gateway_subdomain: null };
   }
 
   // Sync DB with actual container + health state
@@ -274,7 +286,7 @@ export async function getGatewayStatus(orgId: string, memberId: string) {
       if (member.gateway_status !== 'stopped') {
         db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run('stopped', memberId);
       }
-      return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: 'stopped' as const };
+      return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: 'stopped' as const, gateway_subdomain: member.gateway_subdomain };
     }
 
     // Container is running — check if gateway HTTP is actually ready
@@ -285,12 +297,12 @@ export async function getGatewayStatus(orgId: string, memberId: string) {
       db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run(actualStatus, memberId);
     }
 
-    return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: actualStatus };
+    return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: actualStatus, gateway_subdomain: member.gateway_subdomain };
   } catch {
     // Container doesn't exist — mark as stopped
     if (member.gateway_status !== 'stopped') {
       db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run('stopped', memberId);
     }
-    return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: 'stopped' as const };
+    return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: 'stopped' as const, gateway_subdomain: member.gateway_subdomain };
   }
 }

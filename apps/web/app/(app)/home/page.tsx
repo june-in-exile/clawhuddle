@@ -193,9 +193,14 @@ function DashboardView() {
   }, [me?.gateway_status, fetchData]);
 
   const openGateway = () => {
-    if (!me?.gateway_port || !me?.gateway_token) return;
-    const hostname = window.location.hostname;
-    window.open(`http://${hostname}:${me.gateway_port}/?token=${me.gateway_token}`, '_blank');
+    if (!me?.gateway_token) return;
+    if (me.gateway_subdomain) {
+      const base = window.location.hostname;
+      window.open(`https://${me.gateway_subdomain}.${base}/?token=${me.gateway_token}`, '_blank');
+    } else if (me.gateway_port) {
+      const hostname = window.location.hostname;
+      window.open(`http://${hostname}:${me.gateway_port}/?token=${me.gateway_token}`, '_blank');
+    }
   };
 
   if (loading || !ready) {
