@@ -9,7 +9,7 @@ function getResend() {
   return resend;
 }
 
-const FROM_EMAIL = process.env.EMAIL_FROM || 'ClawTeam <noreply@clawteam.dev>';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'ClawHuddle <noreply@clawhuddle.com>';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 export async function sendInvitationEmail(opts: {
@@ -33,14 +33,14 @@ export async function sendInvitationEmail(opts: {
   const result = await client.emails.send({
     from: FROM_EMAIL,
     to: opts.to,
-    subject: `Join ${opts.orgName} on ClawTeam`,
+    subject: `Join ${opts.orgName} on ClawHuddle`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
         <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 8px;">
           You're invited to ${opts.orgName}
         </h2>
         <p style="color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-          ${opts.invitedByName} has invited you to join <strong>${opts.orgName}</strong> as a <strong>${opts.role}</strong> on ClawTeam.
+          ${opts.invitedByName} has invited you to join <strong>${opts.orgName}</strong> as a <strong>${opts.role}</strong> on ClawHuddle.
         </p>
         <a href="${inviteUrl}"
            style="display: inline-block; background: #c7944a; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;">

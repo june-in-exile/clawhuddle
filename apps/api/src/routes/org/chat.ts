@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { getOrgApiKey } from './api-keys.js';
-import type { ChatMessage } from '@clawteam/shared';
+import type { ChatMessage } from '@clawhuddle/shared';
 
 export async function orgChatRoutes(app: FastifyInstance) {
   app.post<{ Params: { orgId: string }; Body: { messages: ChatMessage[] } }>(

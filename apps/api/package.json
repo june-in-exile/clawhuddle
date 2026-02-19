@@ -1,5 +1,5 @@
 {
-  "name": "@clawteam/api",
+  "name": "@clawhuddle/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@clawteam/shared": "*",
+    "@clawhuddle/shared": "*",
     "@fastify/cors": "^10.0.0",
     "@fastify/websocket": "^11.0.0",
     "better-sqlite3": "^11.8.0",

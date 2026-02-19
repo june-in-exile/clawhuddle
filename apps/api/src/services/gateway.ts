@@ -6,13 +6,13 @@ import { getDb } from '../db/index.js';
 import { getOrgApiKey } from '../routes/org/api-keys.js';
 import { generateOpenClawConfig } from './openclaw-config.js';
 import { installSkillsForUser } from './skill-installer.js';
-import type { Skill, OrgMember } from '@clawteam/shared';
+import type { Skill, OrgMember } from '@clawhuddle/shared';
 
 const docker = new Docker();
 
-const GATEWAY_IMAGE = 'clawteam-gateway:local';
+const GATEWAY_IMAGE = 'clawhuddle-gateway:local';
 const PORT_START = 6001;
-const CONTAINER_PREFIX = 'clawteam-gw-';
+const CONTAINER_PREFIX = 'clawhuddle-gw-';
 
 async function checkGatewayHealth(port: number): Promise<boolean> {
   try {

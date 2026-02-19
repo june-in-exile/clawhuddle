@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Skill, ScanRepoResult } from '@clawteam/shared';
+import type { Skill, ScanRepoResult } from '@clawhuddle/shared';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 

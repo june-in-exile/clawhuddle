@@ -2,15 +2,11 @@
 
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
+import { ClawHuddleLogo } from '@/components/logo';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@clawteam.local');
+  const [email, setEmail] = useState('admin@clawhuddle.local');
   const isDev = process.env.NODE_ENV === 'development';
-
-  const handleDevLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await signIn('credentials', { email, callbackUrl: '/home' });
-  };
 
   return (
     <div
@@ -21,7 +17,7 @@ export default function LoginPage() {
       <div
         className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(199, 148, 74, 0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(255, 77, 77, 0.06) 0%, transparent 70%)',
         }}
       />
 
@@ -32,20 +28,16 @@ export default function LoginPage() {
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5"
             style={{
               background: 'var(--accent-muted)',
-              border: '1px solid rgba(199, 148, 74, 0.2)',
+              border: '1px solid rgba(255, 77, 77, 0.2)',
             }}
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
+            <ClawHuddleLogo size={28} />
           </div>
           <h1
             className="text-2xl font-semibold tracking-tight"
             style={{ color: 'var(--text-primary)' }}
           >
-            ClawTeam
+            ClawHuddle
           </h1>
           <p
             className="mt-2 text-sm"
@@ -95,7 +87,7 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
-            <form onSubmit={handleDevLogin} className="space-y-3">
+            <form onSubmit={async (e) => { e.preventDefault(); await signIn('credentials', { email, callbackUrl: '/home' }); }} className="space-y-3">
               <input
                 type="email"
                 value={email}
@@ -109,11 +101,11 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-150"
                 style={{
                   background: 'var(--accent)',
-                  color: 'var(--text-inverse)',
+                  color: '#fff',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'var(--accent-hover)';
-                  e.currentTarget.style.boxShadow = '0 0 20px rgba(199, 148, 74, 0.2)';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 77, 77, 0.2)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'var(--accent)';

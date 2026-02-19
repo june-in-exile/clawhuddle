@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@clawteam/shared';
+import type { ChatMessage } from '@clawhuddle/shared';
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';

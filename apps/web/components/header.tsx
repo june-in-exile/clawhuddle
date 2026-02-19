@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { OrgSwitcher } from './org-switcher';
+import { ClawHuddleLogo } from './logo';
 
 export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const { currentOrgId, memberRole } = useOrg();
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
+  const isSuperAdmin = session?.user?.email === 'allenhsu.taiwan@gmail.com';
 
   return (
     <header
@@ -26,12 +28,8 @@ export function Header() {
           className="flex items-center gap-2 font-semibold text-[15px] tracking-tight"
           style={{ color: 'var(--accent)' }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-          ClawTeam
+          <ClawHuddleLogo size={20} />
+          ClawHuddle
         </Link>
 
         <OrgSwitcher />
@@ -52,6 +50,11 @@ export function Header() {
             <NavLink href="/settings" active={pathname.startsWith('/settings')}>
               Settings
             </NavLink>
+            {isSuperAdmin && (
+              <NavLink href="/super-admin" active={pathname.startsWith('/super-admin')}>
+                SA
+              </NavLink>
+            )}
           </nav>
         )}
       </div>

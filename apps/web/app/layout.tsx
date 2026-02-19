@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClawTeam",
+  title: "ClawHuddle",
   description: "AI assistant for your team",
 };
 

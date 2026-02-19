@@ -5,7 +5,9 @@ import { useSession } from 'next-auth/react';
 import { useOrg } from '@/lib/org-context';
 import { createOrgFetch } from '@/lib/api';
 import { useToast } from '@/components/ui/toast';
-import type { OrgMember } from '@clawteam/shared';
+import { useConfirm } from '@/components/ui/confirm-dialog';
+import type { OrgMember, OrgTier } from '@clawhuddle/shared';
+import { TIER_LIMITS } from '@clawhuddle/shared';
 
 function Badge({ color, children }: { color: 'green' | 'red' | 'yellow' | 'blue' | 'purple' | 'gray'; children: React.ReactNode }) {
   const styles: Record<string, { bg: string; text: string }> = {
@@ -49,16 +51,19 @@ function ActionBtn({ onClick, color = 'default', children }: { onClick: () => vo
 
 interface Props {
   initialMembers: OrgMember[];
+  tier?: OrgTier;
 }
 
-export function MemberTable({ initialMembers }: Props) {
+export function MemberTable({ initialMembers, tier = 'free' }: Props) {
   const { data: session } = useSession();
   const { currentOrgId } = useOrg();
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const userId = (session?.user as any)?.id;
   const [members, setMembers] = useState(initialMembers);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [tierLimitHit, setTierLimitHit] = useState(false);
   const [loadingGateway, setLoadingGateway] = useState<string | null>(null);
 
   const orgFetch = useCallback(
@@ -116,9 +121,30 @@ export function MemberTable({ initialMembers }: Props) {
       setInviteLink(link);
       setInviteEmail('');
     } catch (err: any) {
-      toast(err.message, 'error');
+      if (err.code === 'tier_limit') {
+        setTierLimitHit(true);
+      } else {
+        toast(err.message, 'error');
+      }
     } finally {
       setInviting(false);
+    }
+  };
+
+  const removeMember = async (member: OrgMember) => {
+    const ok = await confirm({
+      title: 'Remove member',
+      description: `Remove ${member.name || member.email} from this organization?`,
+      confirmLabel: 'Remove',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await orgFetch(`/members/${member.id}`, { method: 'DELETE' });
+      toast('Member removed', 'success');
+      await refresh();
+    } catch (err: any) {
+      toast(err.message, 'error');
     }
   };
 
@@ -229,11 +255,11 @@ export function MemberTable({ initialMembers }: Props) {
   return (
     <div>
       {/* Invite form */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <input
           type="email"
           value={inviteEmail}
-          onChange={(e) => setInviteEmail(e.target.value)}
+          onChange={(e) => { setInviteEmail(e.target.value); setTierLimitHit(false); }}
           placeholder="employee@company.com"
           className="flex-1 max-w-sm px-3 py-2 text-sm rounded-lg"
         />
@@ -250,7 +276,36 @@ export function MemberTable({ initialMembers }: Props) {
         >
           Invite Member
         </button>
+        <span className="text-xs tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
+          {members.length} / {TIER_LIMITS[tier] === Infinity ? '\u221e' : TIER_LIMITS[tier]} members
+        </span>
       </div>
+
+      {/* Tier limit banner */}
+      {tierLimitHit && (
+        <div
+          className="flex items-center gap-3 mb-4 px-4 py-3 rounded-lg text-sm"
+          style={{ background: 'var(--yellow-muted)', border: '1px solid rgba(234, 179, 8, 0.3)' }}
+        >
+          <span style={{ color: 'var(--text-primary)' }}>
+            You&apos;ve reached the member limit for the <strong>{tier}</strong> tier.
+          </span>
+          <a
+            href="/settings"
+            className="shrink-0 text-xs font-medium px-3 py-1 rounded-md transition-colors"
+            style={{ color: 'var(--accent-text)', background: 'var(--accent-muted)' }}
+          >
+            Upgrade Plan
+          </a>
+          <button
+            onClick={() => setTierLimitHit(false)}
+            className="shrink-0 text-xs px-1 ml-auto"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
       {/* Invite link */}
       {inviteLink && (
@@ -348,6 +403,11 @@ export function MemberTable({ initialMembers }: Props) {
                     <ActionBtn onClick={() => toggleStatus(member)}>
                       {member.status === 'active' ? 'Disable' : 'Enable'}
                     </ActionBtn>
+                    {member.role !== 'owner' && member.user_id !== userId && (
+                      <ActionBtn onClick={() => removeMember(member)} color="danger">
+                        Remove
+                      </ActionBtn>
+                    )}
                     {gatewayActions(member)}
                   </div>
                 </td>

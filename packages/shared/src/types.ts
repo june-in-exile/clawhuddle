@@ -1,9 +1,24 @@
 // === Database Row Types ===
 
+export type OrgTier = 'free' | 'pro' | 'enterprise';
+
+export const TIER_LIMITS: Record<OrgTier, number> = {
+  free: 5,
+  pro: 20,
+  enterprise: Infinity,
+};
+
+export const TIER_INFO: Record<OrgTier, { label: string; price: string; description: string }> = {
+  free: { label: 'Free', price: '$0/mo', description: 'Up to 5 members' },
+  pro: { label: 'Pro', price: '$10/mo', description: 'Up to 20 members' },
+  enterprise: { label: 'Enterprise', price: 'Custom', description: 'Unlimited members' },
+};
+
 export interface Organization {
   id: string;
   name: string;
   slug: string;
+  tier: OrgTier;
   created_at: string;
 }
 

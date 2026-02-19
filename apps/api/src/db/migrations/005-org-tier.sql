@@ -1,0 +1,1 @@
+ALTER TABLE organizations ADD COLUMN tier TEXT NOT NULL DEFAULT 'free';

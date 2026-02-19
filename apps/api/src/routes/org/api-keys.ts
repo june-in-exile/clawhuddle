@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { getDb } from '../../db/index.js';
 import { v4 as uuid } from 'uuid';
 import { requireRole } from '../../middleware/auth.js';
-import type { SetApiKeyRequest } from '@clawteam/shared';
+import type { SetApiKeyRequest } from '@clawhuddle/shared';
 
 // Simple base64 encode/decode for MVP (same as original)
 function encodeKey(key: string): string {

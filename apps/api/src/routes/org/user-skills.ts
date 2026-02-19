@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { getDb } from '../../db/index.js';
 import { redeployGateway } from '../../services/gateway.js';
-import type { Skill } from '@clawteam/shared';
+import type { Skill } from '@clawhuddle/shared';
 
 interface SkillWithUserStatus extends Skill {
   assigned: boolean;

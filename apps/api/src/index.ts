@@ -11,6 +11,7 @@ import { orgApiKeyRoutes } from './routes/org/api-keys.js';
 import { orgGatewayRoutes } from './routes/org/gateways.js';
 import { orgUserSkillRoutes } from './routes/org/user-skills.js';
 import { orgChatRoutes } from './routes/org/chat.js';
+import { superAdminRoutes } from './routes/super-admin.js';
 
 const app = Fastify({ logger: true });
 
@@ -21,6 +22,9 @@ await app.register(authRoutes);
 
 // Authed routes (authPlugin only, no org context)
 await app.register(orgRoutes);
+
+// Super admin routes
+await app.register(superAdminRoutes);
 
 // Org-scoped routes (orgPlugin = auth + membership check)
 await app.register(async function orgScopedRoutes(instance) {

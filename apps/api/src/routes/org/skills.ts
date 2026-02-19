@@ -3,7 +3,7 @@ import { getDb } from '../../db/index.js';
 import { v4 as uuid } from 'uuid';
 import { requireRole } from '../../middleware/auth.js';
 import { scanRepoForSkills } from '../../services/skill-installer.js';
-import type { CreateSkillRequest, UpdateSkillRequest, ScanRepoRequest, ImportSkillsRequest } from '@clawteam/shared';
+import type { CreateSkillRequest, UpdateSkillRequest, ScanRepoRequest, ImportSkillsRequest } from '@clawhuddle/shared';
 
 export async function orgSkillRoutes(app: FastifyInstance) {
   // List skills for this org (admin+ only)

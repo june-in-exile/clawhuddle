@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { getDb } from '../db/index.js';
-import type { User, OrgMember } from '@clawteam/shared';
+import type { User, OrgMember } from '@clawhuddle/shared';
 
 // Extend Fastify request with our custom properties
 declare module 'fastify' {

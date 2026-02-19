@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { apiFetch } from './api';
-import type { Organization } from '@clawteam/shared';
+import type { Organization } from '@clawhuddle/shared';
 
 interface OrgWithRole extends Organization {
   member_role: string;
@@ -33,7 +33,7 @@ export function useOrg() {
   return useContext(OrgContext);
 }
 
-const ORG_STORAGE_KEY = 'clawteam.currentOrgId';
+const ORG_STORAGE_KEY = 'clawhuddle.currentOrgId';
 
 export function OrgProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();

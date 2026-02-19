@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/api/package.json apps/api/
-RUN npm ci --workspace=@clawteam/api --workspace=@clawteam/shared --include-workspace-root
+RUN npm ci --workspace=@clawhuddle/api --workspace=@clawhuddle/shared --include-workspace-root
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY apps/api/ apps/api/

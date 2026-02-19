@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/index.js';
 import { v4 as uuid } from 'uuid';
 import { authPlugin } from '../middleware/auth.js';
-import type { CreateOrgRequest } from '@clawteam/shared';
+import type { CreateOrgRequest } from '@clawhuddle/shared';
 
 function slugify(name: string): string {
   return name

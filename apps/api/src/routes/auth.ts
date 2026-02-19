@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/index.js';
 import { v4 as uuid } from 'uuid';
-import type { AcceptInviteRequest } from '@clawteam/shared';
+import type { AcceptInviteRequest } from '@clawhuddle/shared';
 
 export async function authRoutes(app: FastifyInstance) {
   // Called by NextAuth on login to sync user
@@ -101,7 +101,7 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     const orgs = db.prepare(
-      `SELECT o.*, om.role as member_role
+      `SELECT o.id, o.name, o.slug, o.tier, o.created_at, om.role as member_role
        FROM organizations o
        JOIN org_members om ON om.org_id = o.id
        WHERE om.user_id = ? AND om.status = 'active'

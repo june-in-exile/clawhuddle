@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { ChatMessage } from '@clawteam/shared';
+import type { ChatMessage } from '@clawhuddle/shared';
 import { MessageBubble } from './message-bubble';
 
 export function MessageList({ messages }: { messages: ChatMessage[] }) {

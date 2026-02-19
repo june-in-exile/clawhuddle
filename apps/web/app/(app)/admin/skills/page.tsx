@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useOrgFetch } from '@/lib/use-org-fetch';
 import { SkillTable } from '@/components/admin/skill-table';
-import type { Skill } from '@clawteam/shared';
+import type { Skill } from '@clawhuddle/shared';
 
 export default function AdminSkillsPage() {
   const { orgFetch, ready } = useOrgFetch();

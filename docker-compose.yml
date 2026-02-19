@@ -2,26 +2,28 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
       - api
+    restart: unless-stopped
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     environment:
-      - NEXTAUTH_URL=http://localhost
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-secret-change-me}
+      - NEXTAUTH_URL=https://clawhuddle.com
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - API_URL=http://api:4000
       - ALLOWED_DOMAIN=${ALLOWED_DOMAIN:-}
     depends_on:
       - api
+    restart: unless-stopped
 
   api:
     build:
@@ -31,16 +33,22 @@ services:
       - DATABASE_PATH=/data/db.sqlite
       - DATA_DIR=/data
       - PORT=4000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - APP_URL=https://clawhuddle.com
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-}
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       gateway-base:
         condition: service_completed_successfully
+    restart: unless-stopped
 
   gateway-base:
     build:
       context: ./docker/gateway
-    image: clawteam-gateway:local
+    image: clawhuddle-gateway:local
     command: ["echo", "Gateway image built"]
     entrypoint: []

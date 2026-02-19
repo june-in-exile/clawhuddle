@@ -160,7 +160,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = state.danger ? '#fca5a5' : 'var(--accent-hover)';
-                    e.currentTarget.style.boxShadow = `0 0 16px ${state.danger ? 'rgba(248,113,113,0.3)' : 'rgba(199,148,74,0.3)'}`;
+                    e.currentTarget.style.boxShadow = `0 0 16px ${state.danger ? 'rgba(248,113,113,0.3)' : 'rgba(255,77,77,0.3)'}`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = state.danger ? 'var(--red)' : 'var(--accent)';

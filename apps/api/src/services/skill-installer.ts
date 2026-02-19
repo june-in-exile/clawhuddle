@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import type { Skill } from '@clawteam/shared';
+import type { Skill } from '@clawhuddle/shared';
 
 function getDataDir(): string {
   return process.env.DATA_DIR || path.resolve('./data');

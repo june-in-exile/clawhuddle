@@ -4,7 +4,8 @@ import { v4 as uuid } from 'uuid';
 import crypto from 'node:crypto';
 import { requireRole } from '../../middleware/auth.js';
 import { sendInvitationEmail } from '../../services/email.js';
-import type { InviteMemberRequest, UpdateMemberRequest } from '@clawteam/shared';
+import type { InviteMemberRequest, UpdateMemberRequest, OrgTier } from '@clawhuddle/shared';
+import { TIER_LIMITS } from '@clawhuddle/shared';
 
 export async function orgMemberRoutes(app: FastifyInstance) {
   // List members
@@ -51,6 +52,28 @@ export async function orgMemberRoutes(app: FastifyInstance) {
 
       if (pendingInvite) {
         return reply.status(409).send({ error: 'conflict', message: 'Invitation already pending for this email' });
+      }
+
+      // Enforce tier member limit
+      const orgRow = db.prepare('SELECT tier FROM organizations WHERE id = ?').get(request.orgId!) as { tier: OrgTier } | undefined;
+      const tier = orgRow?.tier || 'free';
+      const limit = TIER_LIMITS[tier];
+      const { count: currentCount } = db.prepare(
+        `SELECT COUNT(*) as count FROM (
+           SELECT user_id FROM org_members WHERE org_id = ?
+           UNION ALL
+           SELECT email FROM invitations WHERE org_id = ? AND status = 'pending'
+         )`
+      ).get(request.orgId!, request.orgId!) as { count: number };
+
+      if (currentCount >= limit) {
+        return reply.status(403).send({
+          error: 'tier_limit',
+          message: `Member limit reached for ${tier} tier (${currentCount}/${limit})`,
+          tier,
+          limit,
+          current: currentCount,
+        });
       }
 
       const id = uuid();

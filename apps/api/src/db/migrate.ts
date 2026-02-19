@@ -29,7 +29,8 @@ if (fs.existsSync(migrationsDir)) {
       // Ignore idempotent errors (duplicate column, table already exists)
       if (
         err.message?.includes('duplicate column') ||
-        err.message?.includes('already exists')
+        err.message?.includes('already exists') ||
+        err.message?.includes('no such table')
       ) {
         console.log(`Migration skipped (already applied): ${file}`);
       } else {

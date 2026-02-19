@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useOrgFetch } from '@/lib/use-org-fetch';
 import { useToast } from '@/components/ui/toast';
-import type { Skill } from '@clawteam/shared';
+import type { Skill } from '@clawhuddle/shared';
 
 interface SkillWithStatus extends Skill {
   assigned: boolean;

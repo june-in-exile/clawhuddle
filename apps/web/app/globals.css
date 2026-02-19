@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Surfaces ── */
-  --bg-base: #0B0E13;
-  --bg-primary: #10141B;
-  --bg-secondary: #161B25;
-  --bg-tertiary: #1C222E;
-  --bg-hover: #232A38;
-  --bg-input: #141921;
+  /* ── Surfaces (deep navy — OpenClaw aligned) ── */
+  --bg-base: #050810;
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1a2035;
+  --bg-hover: #1f2940;
+  --bg-input: #0d1220;
 
   /* ── Borders ── */
-  --border-primary: #252D3D;
-  --border-subtle: #1C2231;
-  --border-focus: #C7944A;
+  --border-primary: rgba(136, 146, 176, 0.15);
+  --border-subtle: rgba(136, 146, 176, 0.08);
+  --border-focus: #ff4d4d;
 
   /* ── Text ── */
-  --text-primary: #E4E8F0;
-  --text-secondary: #8893A7;
-  --text-tertiary: #556178;
-  --text-inverse: #0B0E13;
+  --text-primary: #f0f4ff;
+  --text-secondary: #8892b0;
+  --text-tertiary: #5a6480;
+  --text-inverse: #050810;
 
-  /* ── Accent (Copper-Amber) ── */
-  --accent: #C7944A;
-  --accent-hover: #D9A85E;
-  --accent-muted: rgba(199, 148, 74, 0.12);
-  --accent-text: #E8C078;
+  /* ── Accent (Coral Red — OpenClaw) ── */
+  --accent: #ff4d4d;
+  --accent-hover: #ff6b6b;
+  --accent-muted: rgba(255, 77, 77, 0.12);
+  --accent-text: #ff6b6b;
 
   /* ── Status ── */
   --green: #34D399;

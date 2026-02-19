@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useOrgFetch } from '@/lib/use-org-fetch';
+import { useOrg } from '@/lib/org-context';
 import { MemberTable } from '@/components/admin/member-table';
-import type { OrgMember } from '@clawteam/shared';
+import type { OrgMember } from '@clawhuddle/shared';
 
 export default function AdminMembersPage() {
   const { orgFetch, ready } = useOrgFetch();
+  const { currentOrg } = useOrg();
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +36,7 @@ export default function AdminMembersPage() {
       <h1 className="text-xl font-semibold tracking-tight mb-6" style={{ color: 'var(--text-primary)' }}>
         Members
       </h1>
-      <MemberTable initialMembers={members} />
+      <MemberTable initialMembers={members} tier={currentOrg?.tier} />
     </div>
   );
 }

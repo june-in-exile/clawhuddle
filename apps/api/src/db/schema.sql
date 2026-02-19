@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
+    tier TEXT NOT NULL DEFAULT 'free',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

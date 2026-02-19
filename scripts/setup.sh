@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== ClawTeam Setup ==="
+echo "=== ClawHuddle Setup ==="
 
 # Check prerequisites
 command -v node >/dev/null 2>&1 || { echo "Error: Node.js is required"; exit 1; }
@@ -24,7 +24,7 @@ npm run db:migrate
 
 # Build gateway Docker image
 echo "Building gateway Docker image..."
-docker build -t clawteam-gateway:local docker/gateway/
+docker build -t clawhuddle-gateway:local docker/gateway/
 
 echo ""
 echo "=== Setup complete ==="

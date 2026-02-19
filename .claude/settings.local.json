@@ -23,7 +23,15 @@
       "WebFetch(domain:www.simpleclaw.com)",
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_take_screenshot",
-      "mcp__playwright__browser_evaluate"
+      "mcp__playwright__browser_evaluate",
+      "WebFetch(domain:openclaw.ai)",
+      "mcp__playwright__browser_run_code",
+      "Bash(lsof:*)",
+      "mcp__serena__activate_project",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_symbol",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "Bash(ls:*)"
     ]
   }
 }

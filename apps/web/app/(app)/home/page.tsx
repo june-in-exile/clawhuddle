@@ -6,7 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useOrg } from '@/lib/org-context';
 import { useOrgFetch } from '@/lib/use-org-fetch';
 import { apiFetch } from '@/lib/api';
-import type { OrgMember, Skill } from '@clawteam/shared';
+import type { OrgMember, Skill } from '@clawhuddle/shared';
 
 interface SkillWithStatus extends Skill {
   assigned: boolean;
@@ -88,7 +88,7 @@ function CreateOrgView({ onCreated }: { onCreated: () => Promise<void> }) {
             className="text-2xl font-semibold tracking-tight"
             style={{ color: 'var(--text-primary)' }}
           >
-            Welcome to ClawTeam
+            Welcome to ClawHuddle
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Create your organization to get started
