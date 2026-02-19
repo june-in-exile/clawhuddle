@@ -33,6 +33,7 @@ export interface OpenClawConfig {
   gateway: {
     mode: string;
     port: number;
+    bind: string;
     auth: {
       mode: string;
       token: string;
@@ -69,6 +70,7 @@ export function generateOpenClawConfig(options: {
     gateway: {
       mode: 'local',
       port,
+      bind: '0.0.0.0',
       auth: {
         mode: 'token',
         token,
