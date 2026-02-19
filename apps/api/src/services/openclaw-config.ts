@@ -70,7 +70,7 @@ export function generateOpenClawConfig(options: {
     gateway: {
       mode: 'local',
       port,
-      bind: '0.0.0.0',
+      bind: 'lan',
       auth: {
         mode: 'token',
         token,
