@@ -34,14 +34,15 @@ export interface OpenClawConfig {
     mode: string;
     port: number;
     bind: string;
+    controlUi: {
+      enabled: boolean;
+      allowInsecureAuth: boolean;
+    };
     auth: {
       mode: string;
       token: string;
     };
     trustedProxies?: string[];
-  };
-  controlUi: {
-    allowInsecureAuth: boolean;
   };
   plugins: {
     entries: Record<string, { enabled: boolean }>;
@@ -75,14 +76,15 @@ export function generateOpenClawConfig(options: {
       mode: 'local',
       port,
       bind: 'lan',
+      controlUi: {
+        enabled: true,
+        allowInsecureAuth: true,
+      },
       auth: {
         mode: 'token',
         token,
       },
       trustedProxies: ['172.16.0.0/12', '10.0.0.0/8', '192.168.0.0/16'],
-    },
-    controlUi: {
-      allowInsecureAuth: true,
     },
     plugins: {
       entries: pluginEntries,
