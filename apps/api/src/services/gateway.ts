@@ -30,8 +30,17 @@ function getDataDir(): string {
   return process.env.DATA_DIR || path.resolve('./data');
 }
 
+// Host path for Docker bind mounts (Docker daemon runs on host, not inside this container)
+function getHostDataDir(): string {
+  return process.env.HOST_DATA_DIR || getDataDir();
+}
+
 function getGatewayDir(orgId: string, userId: string): string {
   return path.join(getDataDir(), 'gateways', orgId, userId);
+}
+
+function getHostGatewayDir(orgId: string, userId: string): string {
+  return path.join(getHostDataDir(), 'gateways', orgId, userId);
 }
 
 function getContainerName(orgId: string, userId: string): string {
@@ -120,7 +129,7 @@ export async function provisionGateway(orgId: string, memberId: string) {
       Env: [`ANTHROPIC_API_KEY=${anthropicApiKey}`],
       HostConfig: {
         NetworkMode: 'host',
-        Binds: [`${gatewayDir}:/root/.openclaw`],
+        Binds: [`${getHostGatewayDir(orgId, member.user_id)}:/root/.openclaw`],
         RestartPolicy: { Name: 'unless-stopped' },
       },
     });

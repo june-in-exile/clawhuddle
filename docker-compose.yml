@@ -33,6 +33,7 @@ services:
     environment:
       - DATABASE_PATH=/data/db.sqlite
       - DATA_DIR=/data
+      - HOST_DATA_DIR=/opt/clawhuddle/data
       - PORT=4000
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
