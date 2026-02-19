@@ -40,6 +40,9 @@ export interface OpenClawConfig {
     };
     trustedProxies?: string[];
   };
+  controlUi: {
+    allowInsecureAuth: boolean;
+  };
   plugins: {
     entries: Record<string, { enabled: boolean }>;
   };
@@ -77,6 +80,9 @@ export function generateOpenClawConfig(options: {
         token,
       },
       trustedProxies: ['172.16.0.0/12', '10.0.0.0/8', '192.168.0.0/16'],
+    },
+    controlUi: {
+      allowInsecureAuth: true,
     },
     plugins: {
       entries: pluginEntries,
