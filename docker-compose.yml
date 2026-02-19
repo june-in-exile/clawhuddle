@@ -28,16 +28,17 @@ services:
       - ALLOWED_DOMAIN=${ALLOWED_DOMAIN:-}
     labels:
       - "traefik.enable=true"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
       # NextAuth routes — highest priority
       - "traefik.http.routers.web-auth.rule=PathPrefix(`/api/auth`)"
       - "traefik.http.routers.web-auth.priority=30"
       - "traefik.http.routers.web-auth.entrypoints=web"
-      - "traefik.http.services.web-auth.loadbalancer.server.port=3000"
+      - "traefik.http.routers.web-auth.service=web"
       # Catch-all for frontend
       - "traefik.http.routers.web.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.web.priority=1"
       - "traefik.http.routers.web.entrypoints=web"
-      - "traefik.http.services.web.loadbalancer.server.port=3000"
+      - "traefik.http.routers.web.service=web"
     depends_on:
       - api
     networks:
