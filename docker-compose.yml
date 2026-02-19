@@ -40,6 +40,9 @@ services:
       - EMAIL_FROM=${EMAIL_FROM:-}
       - APP_URL=https://clawhuddle.com
       - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-}
+      - GATEWAY_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock

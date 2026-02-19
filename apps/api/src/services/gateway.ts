@@ -14,11 +14,17 @@ const GATEWAY_IMAGE = 'clawhuddle-gateway:local';
 const PORT_START = 6001;
 const CONTAINER_PREFIX = 'clawhuddle-gw-';
 
+async function getGatewayHost(): string {
+  // In Docker, reach the host network via host.docker.internal or gateway IP
+  return process.env.GATEWAY_HOST || '127.0.0.1';
+}
+
 async function checkGatewayHealth(port: number): Promise<boolean> {
   try {
+    const host = await getGatewayHost();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(`http://127.0.0.1:${port}/`, { signal: controller.signal });
+    const res = await fetch(`http://${host}:${port}/`, { signal: controller.signal });
     clearTimeout(timeout);
     return res.ok || res.status === 401;
   } catch {
