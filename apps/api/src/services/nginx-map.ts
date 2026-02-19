@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { lookup } from 'node:dns/promises';
 import Docker from 'dockerode';
 import { getDb } from '../db/index.js';
 
@@ -7,6 +8,20 @@ const docker = new Docker();
 
 const NGINX_CONTAINER = process.env.NGINX_CONTAINER_NAME || 'clawhuddle-nginx';
 const GATEWAY_HOST = process.env.GATEWAY_HOST || '127.0.0.1';
+
+// Resolve hostname to IP so nginx map file doesn't depend on DNS
+// (nginx resolver can't read /etc/hosts where host.docker.internal lives)
+let resolvedGatewayHost: string | null = null;
+async function getResolvedGatewayHost(): Promise<string> {
+  if (resolvedGatewayHost) return resolvedGatewayHost;
+  try {
+    const { address } = await lookup(GATEWAY_HOST);
+    resolvedGatewayHost = address;
+  } catch {
+    resolvedGatewayHost = GATEWAY_HOST;
+  }
+  return resolvedGatewayHost;
+}
 
 function getMapFilePath(): string {
   const dataDir = process.env.DATA_DIR || path.resolve('./data');
@@ -30,8 +45,9 @@ export async function regenerateNginxMap(): Promise<void> {
     'SELECT gateway_subdomain, gateway_port FROM org_members WHERE gateway_subdomain IS NOT NULL AND gateway_port IS NOT NULL'
   ).all() as { gateway_subdomain: string; gateway_port: number }[];
 
+  const gatewayIp = await getResolvedGatewayHost();
   const lines = rows.map(
-    (r) => `${r.gateway_subdomain} ${GATEWAY_HOST}:${r.gateway_port};`
+    (r) => `${r.gateway_subdomain} ${gatewayIp}:${r.gateway_port};`
   );
 
   const content = `# Auto-generated gateway subdomain map\n${lines.join('\n')}\n`;
