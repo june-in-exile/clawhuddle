@@ -17,3 +17,14 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   return res.json();
 }
+
+// Org-scoped fetch helper — prepends /api/orgs/{orgId}
+export function createOrgFetch(orgId: string, userId: string) {
+  return function orgFetch<T>(path: string, options?: RequestInit): Promise<T> {
+    const headers: Record<string, string> = {
+      'x-user-id': userId,
+      ...options?.headers as Record<string, string>,
+    };
+    return apiFetch<T>(`/api/orgs/${orgId}${path}`, { ...options, headers });
+  };
+}

@@ -3,11 +3,15 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useOrg } from '@/lib/org-context';
+import { OrgSwitcher } from './org-switcher';
 
 export function Header() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const isAdmin = (session?.user as any)?.role === 'admin';
+  const { currentOrgId, memberRole } = useOrg();
+  const isAdmin = memberRole === 'admin' || memberRole === 'owner';
+  const orgBase = currentOrgId ? `/org/${currentOrgId}` : '';
 
   return (
     <header
@@ -17,9 +21,9 @@ export function Header() {
         borderBottom: '1px solid var(--border-subtle)',
       }}
     >
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
         <Link
-          href="/chat"
+          href={orgBase ? `${orgBase}/chat` : '/'}
           className="flex items-center gap-2 font-semibold text-[15px] tracking-tight"
           style={{ color: 'var(--accent)' }}
         >
@@ -31,22 +35,26 @@ export function Header() {
           ClawTeam
         </Link>
 
-        <nav className="flex items-center gap-1">
-          <NavLink href="/chat" active={pathname.startsWith('/chat')}>
-            Chat
-          </NavLink>
-          <NavLink href="/skills" active={pathname.startsWith('/skills')}>
-            Skills
-          </NavLink>
-          {isAdmin && (
-            <NavLink href="/admin" active={pathname.startsWith('/admin')}>
-              Admin
+        <OrgSwitcher />
+
+        {orgBase && (
+          <nav className="flex items-center gap-1">
+            <NavLink href={`${orgBase}/chat`} active={pathname.startsWith(`${orgBase}/chat`)}>
+              Chat
             </NavLink>
-          )}
-          <NavLink href="/settings" active={pathname === '/settings'}>
-            Settings
-          </NavLink>
-        </nav>
+            <NavLink href={`${orgBase}/skills`} active={pathname.startsWith(`${orgBase}/skills`)}>
+              Skills
+            </NavLink>
+            {isAdmin && (
+              <NavLink href={`${orgBase}/admin`} active={pathname.startsWith(`${orgBase}/admin`)}>
+                Admin
+              </NavLink>
+            )}
+            <NavLink href={`${orgBase}/settings`} active={pathname.startsWith(`${orgBase}/settings`)}>
+              Settings
+            </NavLink>
+          </nav>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

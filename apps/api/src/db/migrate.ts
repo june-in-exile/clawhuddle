@@ -25,8 +25,11 @@ if (fs.existsSync(migrationsDir)) {
       db.exec(sql);
       console.log(`Migration applied: ${file}`);
     } catch (err: any) {
-      // Ignore "duplicate column" errors for idempotency
-      if (err.message?.includes('duplicate column')) {
+      // Ignore idempotent errors (duplicate column, table already exists)
+      if (
+        err.message?.includes('duplicate column') ||
+        err.message?.includes('already exists')
+      ) {
         console.log(`Migration skipped (already applied): ${file}`);
       } else {
         throw err;

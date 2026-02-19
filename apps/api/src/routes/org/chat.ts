@@ -1,13 +1,13 @@
 import { FastifyInstance } from 'fastify';
-import { getCompanyApiKey } from './admin/api-keys.js';
+import { getOrgApiKey } from './api-keys.js';
 import type { ChatMessage } from '@clawteam/shared';
 
-export async function chatRoutes(app: FastifyInstance) {
-  app.post<{ Body: { messages: ChatMessage[]; userId?: string } }>(
-    '/api/chat',
+export async function orgChatRoutes(app: FastifyInstance) {
+  app.post<{ Params: { orgId: string }; Body: { messages: ChatMessage[] } }>(
+    '/api/orgs/:orgId/chat',
     async (request, reply) => {
       const { messages } = request.body;
-      const apiKey = getCompanyApiKey('anthropic');
+      const apiKey = getOrgApiKey(request.orgId!, 'anthropic');
 
       if (!apiKey) {
         return reply.status(503).send({

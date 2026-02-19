@@ -1,13 +1,14 @@
 import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/index.js';
 import { v4 as uuid } from 'uuid';
+import type { AcceptInviteRequest } from '@clawteam/shared';
 
 export async function authRoutes(app: FastifyInstance) {
   // Called by NextAuth on login to sync user
-  app.post<{ Body: { email: string; name?: string } }>(
+  app.post<{ Body: { email: string; name?: string; avatar_url?: string } }>(
     '/api/auth/login',
     async (request, reply) => {
-      const { email, name } = request.body;
+      const { email, name, avatar_url } = request.body;
       if (!email) {
         return reply.status(400).send({ error: 'validation', message: 'email is required' });
       }
@@ -22,16 +23,26 @@ export async function authRoutes(app: FastifyInstance) {
         const role = isFirstUser.count === 0 ? 'admin' : 'member';
 
         db.prepare(
-          'INSERT INTO users (id, email, name, role) VALUES (?, ?, ?, ?)'
-        ).run(id, email, name || null, role);
+          'INSERT INTO users (id, email, name, role, avatar_url) VALUES (?, ?, ?, ?, ?)'
+        ).run(id, email, name || null, role, avatar_url || null);
 
         user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
       } else {
-        // Update last login
-        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
+        // Update last login and optionally name/avatar
+        const updates: string[] = ['last_login = CURRENT_TIMESTAMP'];
+        const values: any[] = [];
+
         if (name && !user.name) {
-          db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, user.id);
+          updates.push('name = ?');
+          values.push(name);
         }
+        if (avatar_url && !user.avatar_url) {
+          updates.push('avatar_url = ?');
+          values.push(avatar_url);
+        }
+
+        values.push(user.id);
+        db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values);
         user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
       }
 
@@ -43,7 +54,7 @@ export async function authRoutes(app: FastifyInstance) {
     }
   );
 
-  // Get current user info
+  // Get current user info + org list
   app.get('/api/auth/me', async (request, reply) => {
     const userId = request.headers['x-user-id'] as string;
     if (!userId) {
@@ -56,6 +67,73 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'not_found', message: 'User not found' });
     }
 
-    return { data: user };
+    const orgs = db.prepare(
+      `SELECT o.*, om.role as member_role
+       FROM organizations o
+       JOIN org_members om ON om.org_id = o.id
+       WHERE om.user_id = ? AND om.status = 'active'
+       ORDER BY o.name`
+    ).all(userId);
+
+    return { data: { ...user, orgs } };
   });
+
+  // Accept invitation by token
+  app.post<{ Body: AcceptInviteRequest }>(
+    '/api/auth/accept-invite',
+    async (request, reply) => {
+      const userId = request.headers['x-user-id'] as string;
+      if (!userId) {
+        return reply.status(401).send({ error: 'unauthorized', message: 'Not authenticated' });
+      }
+
+      const { token } = request.body;
+      if (!token) {
+        return reply.status(400).send({ error: 'validation', message: 'token is required' });
+      }
+
+      const db = getDb();
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as any;
+      if (!user) {
+        return reply.status(404).send({ error: 'not_found', message: 'User not found' });
+      }
+
+      const invitation = db.prepare(
+        "SELECT * FROM invitations WHERE token = ? AND status = 'pending'"
+      ).get(token) as any;
+
+      if (!invitation) {
+        return reply.status(404).send({ error: 'not_found', message: 'Invitation not found or already used' });
+      }
+
+      if (new Date(invitation.expires_at) < new Date()) {
+        db.prepare("UPDATE invitations SET status = 'expired' WHERE id = ?").run(invitation.id);
+        return reply.status(410).send({ error: 'expired', message: 'Invitation has expired' });
+      }
+
+      if (invitation.email !== user.email) {
+        return reply.status(403).send({ error: 'forbidden', message: 'Invitation is for a different email' });
+      }
+
+      // Check if already a member
+      const existing = db.prepare(
+        'SELECT id FROM org_members WHERE org_id = ? AND user_id = ?'
+      ).get(invitation.org_id, userId);
+
+      if (existing) {
+        db.prepare("UPDATE invitations SET status = 'accepted' WHERE id = ?").run(invitation.id);
+        return { data: { org_id: invitation.org_id, already_member: true } };
+      }
+
+      // Create membership
+      const memberId = uuid();
+      db.prepare(
+        'INSERT INTO org_members (id, org_id, user_id, role) VALUES (?, ?, ?, ?)'
+      ).run(memberId, invitation.org_id, userId, invitation.role);
+
+      db.prepare("UPDATE invitations SET status = 'accepted' WHERE id = ?").run(invitation.id);
+
+      return { data: { org_id: invitation.org_id, member_id: memberId } };
+    }
+  );
 }

@@ -2,25 +2,35 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import 'dotenv/config';
 import { authRoutes } from './routes/auth.js';
-import { adminUserRoutes } from './routes/admin/users.js';
-import { adminSkillRoutes } from './routes/admin/skills.js';
-import { adminApiKeyRoutes } from './routes/admin/api-keys.js';
-import { adminGatewayRoutes } from './routes/admin/gateways.js';
-import { chatRoutes } from './routes/chat.js';
-import { userSkillRoutes } from './routes/user/skills.js';
+import { orgRoutes } from './routes/orgs.js';
+import { orgPlugin } from './middleware/auth.js';
+import { orgMemberRoutes } from './routes/org/members.js';
+import { orgSkillRoutes } from './routes/org/skills.js';
+import { orgApiKeyRoutes } from './routes/org/api-keys.js';
+import { orgGatewayRoutes } from './routes/org/gateways.js';
+import { orgUserSkillRoutes } from './routes/org/user-skills.js';
+import { orgChatRoutes } from './routes/org/chat.js';
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true, credentials: true });
 
-// Routes
+// Public / auth routes (no org context needed)
 await app.register(authRoutes);
-await app.register(adminUserRoutes);
-await app.register(adminSkillRoutes);
-await app.register(adminApiKeyRoutes);
-await app.register(adminGatewayRoutes);
-await app.register(chatRoutes);
-await app.register(userSkillRoutes);
+
+// Authed routes (authPlugin only, no org context)
+await app.register(orgRoutes);
+
+// Org-scoped routes (orgPlugin = auth + membership check)
+await app.register(async function orgScopedRoutes(instance) {
+  await instance.register(orgPlugin);
+  await instance.register(orgMemberRoutes);
+  await instance.register(orgSkillRoutes);
+  await instance.register(orgApiKeyRoutes);
+  await instance.register(orgGatewayRoutes);
+  await instance.register(orgUserSkillRoutes);
+  await instance.register(orgChatRoutes);
+});
 
 app.get('/api/health', async () => {
   return { status: 'ok', timestamp: new Date().toISOString() };

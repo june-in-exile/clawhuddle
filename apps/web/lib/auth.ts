@@ -12,17 +12,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }),
         ]
       : []),
-    Credentials({
-      name: 'Dev Login',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email as string;
-        if (!email) return null;
-        return { id: email, email, name: email.split('@')[0] };
-      },
-    }),
+    ...(process.env.NODE_ENV === 'development'
+      ? [
+          Credentials({
+            name: 'Dev Login',
+            credentials: {
+              email: { label: 'Email', type: 'email' },
+            },
+            async authorize(credentials) {
+              const email = credentials?.email as string;
+              if (!email) return null;
+              return { id: email, email, name: email.split('@')[0] };
+            },
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     async signIn({ user }) {
@@ -38,12 +42,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const res = await fetch(`${process.env.API_URL || 'http://localhost:4000'}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: user.email, name: user.name }),
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+              avatar_url: (user as any).image || null,
+            }),
           });
           if (res.ok) {
             const data = await res.json();
             token.userId = data.data.id;
-            token.role = data.data.role;
           }
         } catch (err) {
           console.error('Failed to sync user with API:', err);
@@ -54,7 +61,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.userId;
-        (session.user as any).role = token.role;
       }
       return session;
     },

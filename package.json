@@ -2,7 +2,10 @@
   "name": "clawteam",
   "private": true,
   "packageManager": "npm@11.6.2",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
@@ -12,5 +15,8 @@
   "devDependencies": {
     "turbo": "^2.4.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "fastify-plugin": "^5.1.0"
   }
 }
