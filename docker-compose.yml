@@ -1,8 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.3
-    environment:
-      - DOCKER_API_VERSION=1.45
+    image: traefik:v2.11
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -36,7 +34,7 @@ services:
       - "traefik.http.routers.web-auth.entrypoints=web"
       - "traefik.http.services.web-auth.loadbalancer.server.port=3000"
       # Catch-all for frontend
-      - "traefik.http.routers.web.rule=HostRegexp(`^${DOMAIN:-localhost}$$`)"
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.web.priority=1"
       - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
