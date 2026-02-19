@@ -83,10 +83,15 @@ function createTraefikLabels(containerName: string, subdomain: string): Record<s
     [`traefik.http.routers.${containerName}.entrypoints`]: 'web',
     [`traefik.http.services.${containerName}.loadbalancer.server.port`]: String(GATEWAY_INTERNAL_PORT),
     // Override proxy headers so OpenClaw sees a local connection and auto-approves device pairing
-    // Traefik IP (172.x) is in trustedProxies, so OpenClaw reads X-Forwarded-For as the real client
     [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.X-Forwarded-For`]: '127.0.0.1',
     [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.X-Real-IP`]: '127.0.0.1',
     [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.X-Forwarded-Proto`]: '',
+    // Strip Cloudflare proxy headers
+    [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.CF-Connecting-IP`]: '',
+    [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.True-Client-IP`]: '',
+    [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.CF-IPCountry`]: '',
+    [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.CF-Ray`]: '',
+    [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.CF-Visitor`]: '',
     [`traefik.http.routers.${containerName}.middlewares`]: `${containerName}-headers`,
   };
 }

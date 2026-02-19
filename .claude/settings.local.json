@@ -38,7 +38,10 @@
       "Bash(git -C /Users/allenhsu/Documents/personal/clawteam show 4dfe878)",
       "Bash(git -C /Users/allenhsu/Documents/personal/clawteam show:*)",
       "mcp__serena__initial_instructions",
-      "mcp__serena__list_memories"
+      "mcp__serena__list_memories",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "mcp__serena__edit_memory"
     ]
   }
 }
