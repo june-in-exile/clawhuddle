@@ -1,6 +1,7 @@
 import { PROVIDERS } from '@clawhuddle/shared';
 
-// All available channel plugin IDs in OpenClaw
+// Channel plugins that have working dependencies in the Docker image.
+// Excluded: matrix, nostr, tlon, twitch (missing npm modules in OpenClaw image)
 const CHANNEL_PLUGINS = [
   'telegram',
   'whatsapp',
@@ -12,15 +13,17 @@ const CHANNEL_PLUGINS = [
   'googlechat',
   'msteams',
   'mattermost',
-  'nostr',
-  'matrix',
   'line',
   'feishu',
-  'twitch',
-  'tlon',
   'zalo',
   'zalouser',
 ];
+
+export interface ChannelTokens {
+  telegram?: string;
+  discord?: string;
+  slack?: string;
+}
 
 export interface OpenClawConfig {
   meta: {
@@ -52,6 +55,7 @@ export interface OpenClawConfig {
       models: Record<string, Record<string, never>>;
     };
   };
+  channels?: Record<string, { enabled: boolean; botToken: string; dmPolicy?: string; allowFrom?: string[] }>;
   plugins: {
     entries: Record<string, { enabled: boolean }>;
   };
@@ -62,6 +66,7 @@ export function generateOpenClawConfig(options: {
   token: string;
   enabledChannels?: string[];
   activeProviderIds?: string[];
+  channelTokens?: ChannelTokens;
 }): OpenClawConfig {
   const { port, token } = options;
   const channels = options.enabledChannels ?? CHANNEL_PLUGINS;
@@ -120,6 +125,24 @@ export function generateOpenClawConfig(options: {
         models,
       },
     };
+  }
+
+  // Configure channel tokens (e.g. Telegram bot token)
+  const ct = options.channelTokens;
+  if (ct) {
+    const channelsCfg: NonNullable<OpenClawConfig['channels']> = {};
+    if (ct.telegram) {
+      channelsCfg.telegram = { enabled: true, botToken: ct.telegram, dmPolicy: 'pairing' };
+    }
+    if (ct.discord) {
+      channelsCfg.discord = { enabled: true, botToken: ct.discord };
+    }
+    if (ct.slack) {
+      channelsCfg.slack = { enabled: true, botToken: ct.slack };
+    }
+    if (Object.keys(channelsCfg).length > 0) {
+      config.channels = channelsCfg;
+    }
   }
 
   return config;

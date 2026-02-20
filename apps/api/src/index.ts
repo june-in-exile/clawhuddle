@@ -11,6 +11,7 @@ import { orgSkillRoutes } from './routes/org/skills.js';
 import { orgApiKeyRoutes } from './routes/org/api-keys.js';
 import { orgGatewayRoutes } from './routes/org/gateways.js';
 import { orgUserSkillRoutes } from './routes/org/user-skills.js';
+import { orgMemberChannelRoutes } from './routes/org/member-channels.js';
 import { orgChatRoutes } from './routes/org/chat.js';
 import { superAdminRoutes } from './routes/super-admin.js';
 import { getDb } from './db/index.js';
@@ -54,6 +55,7 @@ await app.register(async function orgScopedRoutes(instance) {
   await instance.register(orgApiKeyRoutes);
   await instance.register(orgGatewayRoutes);
   await instance.register(orgUserSkillRoutes);
+  await instance.register(orgMemberChannelRoutes);
   await instance.register(orgChatRoutes);
 });
 

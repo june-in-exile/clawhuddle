@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { getDb } from "../db/index.js";
 import { getOrgAllApiKeys } from "../routes/org/api-keys.js";
-import { generateOpenClawConfig } from "./openclaw-config.js";
+import { generateOpenClawConfig, type ChannelTokens } from "./openclaw-config.js";
 import { installSkillsForUser } from "./skill-installer.js";
 import type { Skill, OrgMember } from "@clawhuddle/shared";
 import { PROVIDERS } from "@clawhuddle/shared";
@@ -114,6 +114,20 @@ function getMemberSkills(orgId: string, userId: string): Skill[] {
        SELECT * FROM skills WHERE type = 'mandatory' AND enabled = 1 AND org_id = ?`,
     )
     .all(userId, orgId, orgId) as Skill[];
+}
+
+function getMemberChannelTokens(memberId: string): ChannelTokens {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT channel, bot_token FROM member_channels WHERE member_id = ?")
+    .all(memberId) as { channel: string; bot_token: string }[];
+  const tokens: ChannelTokens = {};
+  for (const row of rows) {
+    if (row.channel === "telegram") tokens.telegram = row.bot_token;
+    else if (row.channel === "discord") tokens.discord = row.bot_token;
+    else if (row.channel === "slack") tokens.slack = row.bot_token;
+  }
+  return tokens;
 }
 
 function createTraefikLabels(
@@ -320,11 +334,15 @@ export async function provisionGateway(orgId: string, memberId: string) {
   // Get member's skills
   const skills = getMemberSkills(orgId, member.user_id);
 
+  // Read channel tokens (e.g. Telegram bot token)
+  const channelTokens = getMemberChannelTokens(memberId);
+
   // Generate config
   const config = generateOpenClawConfig({
     port,
     token,
     activeProviderIds: providerIds,
+    channelTokens,
   });
   fs.writeFileSync(
     path.join(gatewayDir, "openclaw.json"),
@@ -494,12 +512,16 @@ export async function redeployGateway(orgId: string, memberId: string) {
   if (providerIds.length === 0)
     throw new Error("No API keys configured — add at least one provider key");
 
+  // Read channel tokens (e.g. Telegram bot token)
+  const channelTokens = getMemberChannelTokens(memberId);
+
   // Update config (keep existing token; skills installed as directories)
   const skills = getMemberSkills(orgId, member.user_id);
   const config = generateOpenClawConfig({
     port: GATEWAY_INTERNAL_PORT,
     token: member.gateway_token,
     activeProviderIds: providerIds,
+    channelTokens,
   });
   const gatewayDir = getGatewayDir(orgId, member.user_id);
   fs.writeFileSync(
@@ -612,4 +634,79 @@ export async function getGatewayStatus(orgId: string, memberId: string) {
       gateway_subdomain: member.gateway_subdomain,
     };
   }
+}
+
+/** Run a command inside a member's gateway container and return stdout. */
+async function execInContainer(
+  containerName: string,
+  cmd: string[],
+): Promise<string> {
+  const container = docker.getContainer(containerName);
+  const exec = await container.exec({
+    Cmd: cmd,
+    AttachStdout: true,
+    AttachStderr: true,
+  });
+  const stream = await exec.start({});
+  return new Promise<string>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+    stream.on("end", async () => {
+      try {
+        const info = await exec.inspect();
+        const output = Buffer.concat(chunks).toString("utf-8");
+        if (info.ExitCode !== 0) {
+          reject(new Error(output.trim() || `Exit code ${info.ExitCode}`));
+        } else {
+          resolve(output);
+        }
+      } catch (err) {
+        reject(err);
+      }
+    });
+    stream.on("error", reject);
+    setTimeout(() => reject(new Error("exec timeout")), 10000);
+  });
+}
+
+/** Approve a pairing code for a channel in the member's gateway container. */
+export async function approvePairing(
+  orgId: string,
+  memberId: string,
+  channel: string,
+  code: string,
+): Promise<string> {
+  const member = getMember(orgId, memberId);
+  if (member.gateway_status !== "running") {
+    throw new Error("Gateway is not running");
+  }
+  const containerName = getContainerName(orgId, member.user_id);
+  const output = await execInContainer(containerName, [
+    "openclaw",
+    "pairing",
+    "approve",
+    channel,
+    code,
+  ]);
+  return output.trim();
+}
+
+/** List pending pairing requests for a channel. */
+export async function listPairingRequests(
+  orgId: string,
+  memberId: string,
+  channel: string,
+): Promise<string> {
+  const member = getMember(orgId, memberId);
+  if (member.gateway_status !== "running") {
+    throw new Error("Gateway is not running");
+  }
+  const containerName = getContainerName(orgId, member.user_id);
+  const output = await execInContainer(containerName, [
+    "openclaw",
+    "pairing",
+    "list",
+    channel,
+  ]);
+  return output.trim();
 }
