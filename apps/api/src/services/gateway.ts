@@ -56,9 +56,15 @@ function getDataDir(): string {
   return process.env.DATA_DIR || path.resolve('./data');
 }
 
-// Host path for Docker bind mounts (Docker daemon runs on host, not inside this container)
+// Host path for Docker bind mounts — must be an absolute path on the HOST machine.
+// In Docker Compose this is set to ${PWD}/data automatically.
+// For local dev (no container), falls back to getDataDir() which is already on the host.
 function getHostDataDir(): string {
-  return path.resolve(process.env.HOST_DATA_DIR || getDataDir());
+  const dir = process.env.HOST_DATA_DIR || getDataDir();
+  if (!path.isAbsolute(dir)) {
+    throw new Error(`HOST_DATA_DIR must be an absolute path (got "${dir}"). Set it in .env or docker-compose.yml.`);
+  }
+  return dir;
 }
 
 function getGatewayDir(orgId: string, userId: string): string {
