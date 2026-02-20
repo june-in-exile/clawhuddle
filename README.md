@@ -20,23 +20,23 @@ Each team member gets an isolated [OpenClaw](https://openclaw.ai) instance with 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     Traefik                         │
-│                  (reverse proxy)                    │
-└──────────┬──────────────────┬───────────────────────┘
-           │                  │
+┌────────────────────────────────────────────────────┐
+│                     Traefik                        │
+│                  (reverse proxy)                   │
+└──────────┬─────────────────┬───────────────────────┘
+           │                 │
      ┌─────▼─────┐     ┌─────▼─────┐
-     │  Next.js   │     │  Fastify   │
-     │  Frontend  │     │  API       │
-     │  :3000     │     │  :4000     │
+     │  Next.js  │     │  Fastify  │
+     │  Frontend │     │  API      │
+     │  :3000    │     │  :4000    │
      └───────────┘     └─────┬─────┘
-                              │
-              ┌───────────────┼───────────────┐
-              │               │               │
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
         ┌─────▼─────┐  ┌─────▼─────┐  ┌─────▼─────┐
-        │  OpenClaw  │  │  OpenClaw  │  │  OpenClaw  │
-        │  User A    │  │  User B    │  │  User C    │
-        │  (Docker)  │  │  (Docker)  │  │  (Docker)  │
+        │  OpenClaw │  │  OpenClaw │  │  OpenClaw │
+        │  User A   │  │  User B   │  │  User C   │
+        │  (Docker) │  │  (Docker) │  │  (Docker) │
         └───────────┘  └───────────┘  └───────────┘
 ```
 
@@ -54,13 +54,13 @@ docker/
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
+| Layer    | Technology                                        |
+| -------- | ------------------------------------------------- |
 | Frontend | Next.js 16, React 19, Tailwind CSS 4, NextAuth v5 |
-| Backend | Fastify 5, better-sqlite3, dockerode |
-| Gateway | OpenClaw (Docker containers, per-user) |
-| Proxy | Traefik 2.11 |
-| Build | Turborepo, TypeScript 5.7 |
+| Backend  | Fastify 5, better-sqlite3, dockerode              |
+| Gateway  | OpenClaw (Docker containers, per-user)            |
+| Proxy    | Traefik 2.11                                      |
+| Build    | Turborepo, TypeScript 5.7                         |
 
 ## Getting Started
 
@@ -143,22 +143,22 @@ This starts Traefik, the web frontend, the API server, and builds the gateway ba
 
 ## Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXTAUTH_URL` | Frontend URL | `http://localhost:3000` |
-| `NEXTAUTH_SECRET` | Session encryption secret | **(required)** |
-| `ANTHROPIC_API_KEY` | Default Anthropic API key | — |
-| `SUPER_ADMIN_EMAIL` | Super admin account email | — |
-| `MAX_MEMBERS_PER_ORG` | Member limit per organization | `50` |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | — |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | — |
-| `ALLOWED_DOMAIN` | Restrict sign-in to email domain | — |
-| `RESEND_API_KEY` | Resend API key for invitation emails | — |
-| `EMAIL_FROM` | Sender address for emails | — |
-| `DATABASE_PATH` | SQLite file path | `./data/db.sqlite` |
-| `CORS_ORIGIN` | Allowed origin for API requests | `http://localhost:3000` |
-| `DOCKER_NETWORK` | Docker network name | `clawhuddle-net` |
-| `DOMAIN` | Production domain (used by Traefik) | `localhost` |
+| Variable               | Description                          | Default                 |
+| ---------------------- | ------------------------------------ | ----------------------- |
+| `NEXTAUTH_URL`         | Frontend URL                         | `http://localhost:3000` |
+| `NEXTAUTH_SECRET`      | Session encryption secret            | **(required)**          |
+| `ANTHROPIC_API_KEY`    | Default Anthropic API key            | —                       |
+| `SUPER_ADMIN_EMAIL`    | Super admin account email            | —                       |
+| `MAX_MEMBERS_PER_ORG`  | Member limit per organization        | `50`                    |
+| `GOOGLE_CLIENT_ID`     | Google OAuth client ID               | —                       |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret           | —                       |
+| `ALLOWED_DOMAIN`       | Restrict sign-in to email domain     | —                       |
+| `RESEND_API_KEY`       | Resend API key for invitation emails | —                       |
+| `EMAIL_FROM`           | Sender address for emails            | —                       |
+| `DATABASE_PATH`        | SQLite file path                     | `./data/db.sqlite`      |
+| `CORS_ORIGIN`          | Allowed origin for API requests      | `http://localhost:3000` |
+| `DOCKER_NETWORK`       | Docker network name                  | `clawhuddle-net`        |
+| `DOMAIN`               | Production domain (used by Traefik)  | `localhost`             |
 
 ## Project Scripts
 

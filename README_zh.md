@@ -20,23 +20,23 @@
 ## 架構
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     Traefik                         │
-│                   (反向代理)                         │
-└──────────┬──────────────────┬───────────────────────┘
-           │                  │
+┌────────────────────────────────────────────────────┐
+│                     Traefik                        │
+│                  (reverse proxy)                   │
+└──────────┬─────────────────┬───────────────────────┘
+           │                 │
      ┌─────▼─────┐     ┌─────▼─────┐
-     │  Next.js   │     │  Fastify   │
-     │  前端       │     │  API       │
-     │  :3000     │     │  :4000     │
+     │  Next.js  │     │  Fastify  │
+     │  Frontend │     │  API      │
+     │  :3000    │     │  :4000    │
      └───────────┘     └─────┬─────┘
-                              │
-              ┌───────────────┼───────────────┐
-              │               │               │
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
         ┌─────▼─────┐  ┌─────▼─────┐  ┌─────▼─────┐
-        │  OpenClaw  │  │  OpenClaw  │  │  OpenClaw  │
-        │  使用者 A   │  │  使用者 B   │  │  使用者 C   │
-        │  (Docker)  │  │  (Docker)  │  │  (Docker)  │
+        │  OpenClaw │  │  OpenClaw │  │  OpenClaw │
+        │  User A   │  │  User B   │  │  User C   │
+        │  (Docker) │  │  (Docker) │  │  (Docker) │
         └───────────┘  └───────────┘  └───────────┘
 ```
 
@@ -54,13 +54,13 @@ docker/
 
 ## 技術棧
 
-| 層級 | 技術 |
-|------|------|
+| 層級 | 技術                                              |
+| ---- | ------------------------------------------------- |
 | 前端 | Next.js 16, React 19, Tailwind CSS 4, NextAuth v5 |
-| 後端 | Fastify 5, better-sqlite3, dockerode |
-| 閘道 | OpenClaw (Docker 容器，每位使用者獨立) |
-| 代理 | Traefik 2.11 |
-| 建置 | Turborepo, TypeScript 5.7 |
+| 後端 | Fastify 5, better-sqlite3, dockerode              |
+| 閘道 | OpenClaw (Docker 容器，每位使用者獨立)            |
+| 代理 | Traefik 2.11                                      |
+| 建置 | Turborepo, TypeScript 5.7                         |
 
 ## 快速開始
 
@@ -143,22 +143,22 @@ docker compose up -d
 
 ## 環境變數
 
-| 變數 | 說明 | 預設值 |
-|------|------|--------|
-| `NEXTAUTH_URL` | 前端 URL | `http://localhost:3000` |
-| `NEXTAUTH_SECRET` | Session 加密密鑰 | **（必填）** |
-| `ANTHROPIC_API_KEY` | 預設 Anthropic API 金鑰 | — |
-| `SUPER_ADMIN_EMAIL` | 超級管理員 email | — |
-| `MAX_MEMBERS_PER_ORG` | 每個組織的成員上限 | `50` |
-| `GOOGLE_CLIENT_ID` | Google OAuth 用戶端 ID | — |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 用戶端密鑰 | — |
-| `ALLOWED_DOMAIN` | 限制登入 email 網域 | — |
-| `RESEND_API_KEY` | Resend API 金鑰（邀請信用） | — |
-| `EMAIL_FROM` | 寄件者地址 | — |
-| `DATABASE_PATH` | SQLite 檔案路徑 | `./data/db.sqlite` |
-| `CORS_ORIGIN` | API 允許的來源 | `http://localhost:3000` |
-| `DOCKER_NETWORK` | Docker 網路名稱 | `clawhuddle-net` |
-| `DOMAIN` | 正式環境網域（Traefik 用） | `localhost` |
+| 變數                   | 說明                        | 預設值                  |
+| ---------------------- | --------------------------- | ----------------------- |
+| `NEXTAUTH_URL`         | 前端 URL                    | `http://localhost:3000` |
+| `NEXTAUTH_SECRET`      | Session 加密密鑰            | **（必填）**            |
+| `ANTHROPIC_API_KEY`    | 預設 Anthropic API 金鑰     | —                       |
+| `SUPER_ADMIN_EMAIL`    | 超級管理員 email            | —                       |
+| `MAX_MEMBERS_PER_ORG`  | 每個組織的成員上限          | `50`                    |
+| `GOOGLE_CLIENT_ID`     | Google OAuth 用戶端 ID      | —                       |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 用戶端密鑰     | —                       |
+| `ALLOWED_DOMAIN`       | 限制登入 email 網域         | —                       |
+| `RESEND_API_KEY`       | Resend API 金鑰（邀請信用） | —                       |
+| `EMAIL_FROM`           | 寄件者地址                  | —                       |
+| `DATABASE_PATH`        | SQLite 檔案路徑             | `./data/db.sqlite`      |
+| `CORS_ORIGIN`          | API 允許的來源              | `http://localhost:3000` |
+| `DOCKER_NETWORK`       | Docker 網路名稱             | `clawhuddle-net`        |
+| `DOMAIN`               | 正式環境網域（Traefik 用）  | `localhost`             |
 
 ## 專案指令
 
