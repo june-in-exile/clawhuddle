@@ -91,7 +91,7 @@ export function generateOpenClawConfig(options: {
     gateway: {
       mode: 'local',
       port,
-      bind: 'lan',
+      bind: 'loopback',
       controlUi: {
         enabled: true,
         allowInsecureAuth: true,

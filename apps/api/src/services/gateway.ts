@@ -12,7 +12,9 @@ import { PROVIDERS } from "@clawhuddle/shared";
 const docker = new Docker();
 
 const GATEWAY_IMAGE = "clawhuddle-gateway:local";
+// OpenClaw listens on loopback:6100; socat bridges external traffic on 0.0.0.0:6101
 const GATEWAY_INTERNAL_PORT = 6100;
+const GATEWAY_EXTERNAL_PORT = 6101;
 const CONTAINER_PREFIX = "clawhuddle-gw-";
 const DOCKER_NETWORK = process.env.DOCKER_NETWORK || "clawhuddle-net";
 const DOMAIN = process.env.DOMAIN || "localhost";
@@ -138,8 +140,9 @@ function createTraefikLabels(
     "traefik.enable": "true",
     [`traefik.http.routers.${containerName}.rule`]: `Host(\`${subdomain}.${GATEWAY_DOMAIN}\`)`,
     [`traefik.http.routers.${containerName}.entrypoints`]: "web",
+    // Traefik connects to socat port (0.0.0.0:6101) which forwards to OpenClaw loopback port
     [`traefik.http.services.${containerName}.loadbalancer.server.port`]: String(
-      GATEWAY_INTERNAL_PORT,
+      GATEWAY_EXTERNAL_PORT,
     ),
     // Override proxy headers so OpenClaw sees a local connection and auto-approves device pairing
     [`traefik.http.middlewares.${containerName}-headers.headers.customrequestheaders.X-Forwarded-For`]:
@@ -270,10 +273,10 @@ function createContainerConfig(
     RestartPolicy: { Name: "unless-stopped" },
   };
 
-  // Local dev: publish port so gateway is accessible without Traefik
+  // Local dev: publish socat port so gateway is accessible without Traefik
   if (IS_LOCAL_DEV) {
     hostConfig.PortBindings = {
-      [`${GATEWAY_INTERNAL_PORT}/tcp`]: [{ HostPort: "0" }], // 0 = random available port
+      [`${GATEWAY_EXTERNAL_PORT}/tcp`]: [{ HostPort: "0" }], // 0 = random available port
     };
   }
 
@@ -282,7 +285,7 @@ function createContainerConfig(
     name: containerName,
     Env: [],
     Labels: createTraefikLabels(containerName, subdomain),
-    ExposedPorts: { [`${GATEWAY_INTERNAL_PORT}/tcp`]: {} },
+    ExposedPorts: { [`${GATEWAY_EXTERNAL_PORT}/tcp`]: {} },
     HostConfig: hostConfig,
     NetworkingConfig: {
       EndpointsConfig: {
@@ -299,7 +302,7 @@ async function getHostPort(containerName: string): Promise<number | null> {
     const container = docker.getContainer(containerName);
     const info = await container.inspect();
     const portBindings =
-      info.NetworkSettings.Ports[`${GATEWAY_INTERNAL_PORT}/tcp`];
+      info.NetworkSettings.Ports[`${GATEWAY_EXTERNAL_PORT}/tcp`];
     return portBindings?.[0]?.HostPort
       ? Number(portBindings[0].HostPort)
       : null;
