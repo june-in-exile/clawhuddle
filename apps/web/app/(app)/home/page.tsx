@@ -198,7 +198,8 @@ function DashboardView() {
     if (hostname === 'localhost' && me.gateway_port) {
       window.open(`http://localhost:${me.gateway_port}/?token=${me.gateway_token}`, '_blank');
     } else if (me.gateway_subdomain) {
-      window.open(`${protocol}//${me.gateway_subdomain}.${hostname}/?token=${me.gateway_token}`, '_blank');
+      const gwDomain = process.env.NEXT_PUBLIC_GATEWAY_DOMAIN || hostname;
+      window.open(`${protocol}//${me.gateway_subdomain}.${gwDomain}/?token=${me.gateway_token}`, '_blank');
     }
   };
 

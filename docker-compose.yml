@@ -26,6 +26,7 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - API_URL=http://api:4000
       - ALLOWED_DOMAIN=${ALLOWED_DOMAIN:-}
+      - NEXT_PUBLIC_GATEWAY_DOMAIN=${GATEWAY_DOMAIN:-}
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
@@ -61,6 +62,7 @@ services:
       - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-}
       - DOCKER_NETWORK=clawhuddle-net
       - DOMAIN=${DOMAIN:-localhost}
+      - GATEWAY_DOMAIN=${GATEWAY_DOMAIN:-}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
     labels:
       - "traefik.enable=true"

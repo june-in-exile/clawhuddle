@@ -189,7 +189,8 @@ export function MemberTable({ initialMembers }: Props) {
     if (hostname === 'localhost' && member.gateway_port) {
       window.open(`http://localhost:${member.gateway_port}/?token=${member.gateway_token}`, '_blank');
     } else if (member.gateway_subdomain) {
-      window.open(`${protocol}//${member.gateway_subdomain}.${hostname}/?token=${member.gateway_token}`, '_blank');
+      const gwDomain = process.env.NEXT_PUBLIC_GATEWAY_DOMAIN || hostname;
+      window.open(`${protocol}//${member.gateway_subdomain}.${gwDomain}/?token=${member.gateway_token}`, '_blank');
     }
   };
 
