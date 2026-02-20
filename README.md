@@ -1,8 +1,8 @@
 # ClawHuddle
 
-**Managed OpenClaw for teams** — Give every person on your team their own AI assistant.
+**Self-hosted OpenClaw for teams** — Give every person on your team their own AI assistant.
 
-Each team member gets an isolated [OpenClaw](https://openclaw.ai) instance — no servers, no Docker, no maintenance. You add people, we handle the rest.
+Each team member gets an isolated [OpenClaw](https://openclaw.ai) instance with zero maintenance. You add people, the system handles the rest.
 
 [English](#features) | [中文](./README_zh.md)
 
@@ -15,7 +15,7 @@ Each team member gets an isolated [OpenClaw](https://openclaw.ai) instance — n
 - **Admin controls** — Invite members, manage API keys, monitor deployments. One place for everything.
 - **Zero-touch deploy** — Add someone to your org. Their AI assistant is running within seconds.
 - **Private & secure** — Each instance is fully isolated. Conversations, files, and settings never leak between users.
-- **Multi-provider** — Bring your own API keys for Anthropic, OpenAI, or any supported provider.
+- **Multi-provider** — Bring your own API keys for Anthropic, OpenAI, Google Gemini, or OpenRouter.
 
 ## Architecture
 
@@ -75,7 +75,7 @@ docker/
 1. **Clone the repo**
 
 ```bash
-git clone https://github.com/anthropics/clawhuddle.git
+git clone https://github.com/allen-hsu/clawhuddle.git
 cd clawhuddle
 ```
 
@@ -98,7 +98,7 @@ Edit `.env` with your values:
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=change-me-to-random-secret
 
-# LLM API key (used as org default)
+# LLM API key (at least one provider required)
 ANTHROPIC_API_KEY=sk-ant-...
 
 # Super admin account
@@ -112,19 +112,13 @@ RESEND_API_KEY=re_xxxx
 EMAIL_FROM=ClawHuddle <noreply@yourdomain.com>
 ```
 
-4. **Run database migrations**
-
-```bash
-npm run db:migrate
-```
-
-5. **Build the gateway image**
+4. **Build the gateway image**
 
 ```bash
 docker build -t clawhuddle-gateway:local docker/gateway
 ```
 
-6. **Start development servers**
+5. **Start development servers**
 
 ```bash
 npm run dev
@@ -139,6 +133,9 @@ Open `http://localhost:3000/login` and sign in. The first user automatically bec
 ## Docker Compose (Production)
 
 ```bash
+cp .env.example .env
+# Edit .env with your production values (DOMAIN, NEXTAUTH_SECRET, etc.)
+
 docker compose up -d
 ```
 
@@ -146,20 +143,22 @@ This starts Traefik, the web frontend, the API server, and builds the gateway ba
 
 ## Configuration
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXTAUTH_URL` | Frontend URL | Yes |
-| `NEXTAUTH_SECRET` | Session encryption secret | Yes |
-| `ANTHROPIC_API_KEY` | Default Anthropic API key | Yes |
-| `SUPER_ADMIN_EMAIL` | Admin account email | No |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | No |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | No |
-| `ALLOWED_DOMAIN` | Restrict sign-in to email domain | No |
-| `RESEND_API_KEY` | Resend API key for emails | No |
-| `EMAIL_FROM` | Sender address for emails | No |
-| `DATABASE_PATH` | SQLite file path (default: `./data/db.sqlite`) | No |
-| `DOCKER_NETWORK` | Docker network name (default: `clawhuddle-net`) | No |
-| `DOMAIN` | Production domain | No |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NEXTAUTH_URL` | Frontend URL | `http://localhost:3000` |
+| `NEXTAUTH_SECRET` | Session encryption secret | **(required)** |
+| `ANTHROPIC_API_KEY` | Default Anthropic API key | — |
+| `SUPER_ADMIN_EMAIL` | Super admin account email | — |
+| `MAX_MEMBERS_PER_ORG` | Member limit per organization | `50` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | — |
+| `ALLOWED_DOMAIN` | Restrict sign-in to email domain | — |
+| `RESEND_API_KEY` | Resend API key for invitation emails | — |
+| `EMAIL_FROM` | Sender address for emails | — |
+| `DATABASE_PATH` | SQLite file path | `./data/db.sqlite` |
+| `CORS_ORIGIN` | Allowed origin for API requests | `http://localhost:3000` |
+| `DOCKER_NETWORK` | Docker network name | `clawhuddle-net` |
+| `DOMAIN` | Production domain (used by Traefik) | `localhost` |
 
 ## Project Scripts
 
