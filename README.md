@@ -187,4 +187,4 @@ If you find ClawHuddle useful, consider buying me a coffee!
 
 ## License
 
-MIT
+[AGPL-3.0](./LICENSE) — You can use, modify, and distribute this software freely. If you run a modified version as a network service, you must share your source code under the same license.
