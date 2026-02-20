@@ -1,3 +1,5 @@
+import { PROVIDERS } from '@clawhuddle/shared';
+
 // All available channel plugin IDs in OpenClaw
 const CHANNEL_PLUGINS = [
   'telegram',
@@ -44,6 +46,12 @@ export interface OpenClawConfig {
     };
     trustedProxies?: string[];
   };
+  agents?: {
+    defaults: {
+      model: { primary: string; fallbacks?: string[] };
+      models: Record<string, Record<string, never>>;
+    };
+  };
   plugins: {
     entries: Record<string, { enabled: boolean }>;
   };
@@ -53,6 +61,7 @@ export function generateOpenClawConfig(options: {
   port: number;
   token: string;
   enabledChannels?: string[];
+  activeProviderIds?: string[];
 }): OpenClawConfig {
   const { port, token } = options;
   const channels = options.enabledChannels ?? CHANNEL_PLUGINS;
@@ -90,6 +99,28 @@ export function generateOpenClawConfig(options: {
       entries: pluginEntries,
     },
   };
+
+  // Set default model based on active providers so OpenClaw doesn't
+  // fall back to Anthropic when only another provider's key exists
+  const activeProviders = (options.activeProviderIds ?? [])
+    .map((id) => PROVIDERS.find((p) => p.id === id))
+    .filter(Boolean) as typeof PROVIDERS;
+
+  if (activeProviders.length > 0) {
+    const models: Record<string, Record<string, never>> = {};
+    for (const p of activeProviders) {
+      models[p.defaultModel] = {};
+    }
+    const primary = activeProviders[0].defaultModel;
+    const fallbacks = activeProviders.slice(1).map((p) => p.defaultModel);
+
+    config.agents = {
+      defaults: {
+        model: { primary, ...(fallbacks.length > 0 ? { fallbacks } : {}) },
+        models,
+      },
+    };
+  }
 
   return config;
 }

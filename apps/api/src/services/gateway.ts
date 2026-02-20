@@ -3,10 +3,12 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { getDb } from '../db/index.js';
-import { getOrgApiKey } from '../routes/org/api-keys.js';
+import { getOrgAllApiKeys } from '../routes/org/api-keys.js';
 import { generateOpenClawConfig } from './openclaw-config.js';
 import { installSkillsForUser } from './skill-installer.js';
 import type { Skill, OrgMember } from '@clawhuddle/shared';
+import { PROVIDERS } from '@clawhuddle/shared';
+
 
 const docker = new Docker();
 
@@ -16,13 +18,35 @@ const CONTAINER_PREFIX = 'clawhuddle-gw-';
 const DOCKER_NETWORK = process.env.DOCKER_NETWORK || 'clawhuddle-net';
 const DOMAIN = process.env.DOMAIN || 'localhost';
 
+async function ensureNetwork(): Promise<void> {
+  try {
+    await docker.getNetwork(DOCKER_NETWORK).inspect();
+  } catch {
+    await docker.createNetwork({ Name: DOCKER_NETWORK, Driver: 'bridge' });
+  }
+}
+
 async function checkGatewayHealth(containerName: string): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(`http://${containerName}:${GATEWAY_INTERNAL_PORT}/`, { signal: controller.signal });
-    clearTimeout(timeout);
-    return res.ok || res.status === 401;
+    const container = docker.getContainer(containerName);
+    const exec = await container.exec({
+      Cmd: ['node', '-e', `fetch('http://127.0.0.1:${GATEWAY_INTERNAL_PORT}/').then(r=>(r.ok||r.status===401)?process.exit(0):process.exit(1)).catch(()=>process.exit(1))`],
+      AttachStdout: true,
+      AttachStderr: true,
+    });
+    const stream = await exec.start({});
+    return new Promise<boolean>((resolve) => {
+      stream.resume();
+      stream.on('end', async () => {
+        try {
+          const info = await exec.inspect();
+          resolve(info.ExitCode === 0);
+        } catch {
+          resolve(false);
+        }
+      });
+      setTimeout(() => resolve(false), 5000);
+    });
   } catch {
     return false;
   }
@@ -96,16 +120,42 @@ function createTraefikLabels(containerName: string, subdomain: string): Record<s
   };
 }
 
-function createContainerConfig(containerName: string, subdomain: string, anthropicApiKey: string, orgId: string, userId: string) {
+function getOrgProviderEnv(orgId: string): { envVars: string[]; providerIds: string[] } {
+  const allKeys = getOrgAllApiKeys(orgId);
+  const envVars: string[] = [];
+  const providerIds: string[] = [];
+  for (const { provider, key } of allKeys) {
+    const providerConfig = PROVIDERS.find((p) => p.id === provider);
+    if (providerConfig) {
+      envVars.push(`${providerConfig.envVar}=${key}`);
+      providerIds.push(provider);
+    }
+  }
+  return { envVars, providerIds };
+}
+
+const IS_LOCAL_DEV = DOMAIN === 'localhost';
+
+function createContainerConfig(containerName: string, subdomain: string, envVars: string[], orgId: string, userId: string) {
+  const hostConfig: Record<string, any> = {
+    Binds: [`${getHostGatewayDir(orgId, userId)}:/root/.openclaw`],
+    RestartPolicy: { Name: 'unless-stopped' },
+  };
+
+  // Local dev: publish port so gateway is accessible without Traefik
+  if (IS_LOCAL_DEV) {
+    hostConfig.PortBindings = {
+      [`${GATEWAY_INTERNAL_PORT}/tcp`]: [{ HostPort: '0' }], // 0 = random available port
+    };
+  }
+
   return {
     Image: GATEWAY_IMAGE,
     name: containerName,
-    Env: [`ANTHROPIC_API_KEY=${anthropicApiKey}`],
+    Env: envVars,
     Labels: createTraefikLabels(containerName, subdomain),
-    HostConfig: {
-      Binds: [`${getHostGatewayDir(orgId, userId)}:/root/.openclaw`],
-      RestartPolicy: { Name: 'unless-stopped' as const },
-    },
+    ExposedPorts: { [`${GATEWAY_INTERNAL_PORT}/tcp`]: {} },
+    HostConfig: hostConfig,
     NetworkingConfig: {
       EndpointsConfig: {
         [DOCKER_NETWORK]: {},
@@ -114,15 +164,29 @@ function createContainerConfig(containerName: string, subdomain: string, anthrop
   };
 }
 
+// After container starts, read the actual host port Docker allocated
+async function getHostPort(containerName: string): Promise<number | null> {
+  if (!IS_LOCAL_DEV) return null;
+  try {
+    const container = docker.getContainer(containerName);
+    const info = await container.inspect();
+    const portBindings = info.NetworkSettings.Ports[`${GATEWAY_INTERNAL_PORT}/tcp`];
+    return portBindings?.[0]?.HostPort ? Number(portBindings[0].HostPort) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function provisionGateway(orgId: string, memberId: string) {
+  await ensureNetwork();
   const db = getDb();
   const member = getMember(orgId, memberId);
   if (member.gateway_status === 'running' || member.gateway_status === 'deploying') {
     throw new Error('Gateway already running');
   }
 
-  const anthropicApiKey = getOrgApiKey(orgId, 'anthropic');
-  if (!anthropicApiKey) throw new Error('No Anthropic API key configured');
+  const { envVars, providerIds } = getOrgProviderEnv(orgId);
+  if (envVars.length === 0) throw new Error('No API keys configured — add at least one provider key');
 
   // Use fixed internal port, generate token and subdomain
   const port = GATEWAY_INTERNAL_PORT;
@@ -133,7 +197,7 @@ export async function provisionGateway(orgId: string, memberId: string) {
   const skills = getMemberSkills(orgId, member.user_id);
 
   // Generate config
-  const config = generateOpenClawConfig({ port, token });
+  const config = generateOpenClawConfig({ port, token, activeProviderIds: providerIds });
 
   // Create workspace directory
   const gatewayDir = getGatewayDir(orgId, member.user_id);
@@ -162,15 +226,21 @@ export async function provisionGateway(orgId: string, memberId: string) {
     }
 
     const container = await docker.createContainer(
-      createContainerConfig(containerName, subdomain, anthropicApiKey, orgId, member.user_id)
+      createContainerConfig(containerName, subdomain, envVars, orgId, member.user_id)
     );
 
     await container.start();
 
+    // In local dev, read the actual host port Docker allocated
+    const actualPort = (await getHostPort(containerName)) || port;
+    if (actualPort !== port) {
+      db.prepare('UPDATE org_members SET gateway_port = ? WHERE id = ?').run(actualPort, memberId);
+    }
+
     // Mark as deploying — getGatewayStatus will promote to running after health check
     db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run('deploying', memberId);
 
-    return { memberId, userId: member.user_id, gateway_port: port, gateway_status: 'deploying' as const, gateway_subdomain: subdomain };
+    return { memberId, userId: member.user_id, gateway_port: actualPort, gateway_status: 'deploying' as const, gateway_subdomain: subdomain };
   } catch (err) {
     // Rollback DB on failure
     db.prepare(
@@ -237,12 +307,13 @@ export async function removeGateway(orgId: string, memberId: string) {
 }
 
 export async function redeployGateway(orgId: string, memberId: string) {
+  await ensureNetwork();
   const db = getDb();
   const member = getMember(orgId, memberId);
   if (!member.gateway_port || !member.gateway_token || !member.gateway_subdomain) throw new Error('No gateway deployed');
 
-  const anthropicApiKey = getOrgApiKey(orgId, 'anthropic');
-  if (!anthropicApiKey) throw new Error('No Anthropic API key configured');
+  const { envVars, providerIds } = getOrgProviderEnv(orgId);
+  if (envVars.length === 0) throw new Error('No API keys configured — add at least one provider key');
 
   const containerName = getContainerName(orgId, member.user_id);
 
@@ -257,7 +328,7 @@ export async function redeployGateway(orgId: string, memberId: string) {
 
   // Update config (keep existing token; skills installed as directories)
   const skills = getMemberSkills(orgId, member.user_id);
-  const config = generateOpenClawConfig({ port: GATEWAY_INTERNAL_PORT, token: member.gateway_token });
+  const config = generateOpenClawConfig({ port: GATEWAY_INTERNAL_PORT, token: member.gateway_token, activeProviderIds: providerIds });
   const gatewayDir = getGatewayDir(orgId, member.user_id);
   fs.writeFileSync(path.join(gatewayDir, 'openclaw.json'), JSON.stringify(config, null, 2));
 
@@ -266,13 +337,20 @@ export async function redeployGateway(orgId: string, memberId: string) {
 
   // Create new container with updated env vars
   const container = await docker.createContainer(
-    createContainerConfig(containerName, member.gateway_subdomain, anthropicApiKey, orgId, member.user_id)
+    createContainerConfig(containerName, member.gateway_subdomain, envVars, orgId, member.user_id)
   );
 
   await container.start();
+
+  // In local dev, read the actual host port Docker allocated
+  const actualPort = (await getHostPort(containerName)) || member.gateway_port;
+  if (actualPort !== member.gateway_port) {
+    db.prepare('UPDATE org_members SET gateway_port = ? WHERE id = ?').run(actualPort, memberId);
+  }
+
   db.prepare('UPDATE org_members SET gateway_status = ? WHERE id = ?').run('deploying', memberId);
 
-  return { memberId, userId: member.user_id, gateway_port: member.gateway_port, gateway_status: 'deploying' as const };
+  return { memberId, userId: member.user_id, gateway_port: actualPort, gateway_status: 'deploying' as const };
 }
 
 export async function getGatewayStatus(orgId: string, memberId: string) {

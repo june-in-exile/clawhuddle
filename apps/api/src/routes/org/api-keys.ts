@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { getDb } from '../../db/index.js';
 import { v4 as uuid } from 'uuid';
 import { requireRole } from '../../middleware/auth.js';
-import type { SetApiKeyRequest } from '@clawhuddle/shared';
+import { PROVIDER_IDS, type SetApiKeyRequest } from '@clawhuddle/shared';
 
 // Simple base64 encode/decode for MVP (same as original)
 function encodeKey(key: string): string {
@@ -48,6 +48,9 @@ export async function orgApiKeyRoutes(app: FastifyInstance) {
       if (!provider || !key) {
         return reply.status(400).send({ error: 'validation', message: 'provider and key are required' });
       }
+      if (!PROVIDER_IDS.includes(provider)) {
+        return reply.status(400).send({ error: 'validation', message: `Unknown provider: ${provider}` });
+      }
 
       const db = getDb();
       // Remove old default for this provider in this org
@@ -84,4 +87,13 @@ export function getOrgApiKey(orgId: string, provider: string): string | null {
     'SELECT key_encrypted FROM api_keys WHERE provider = ? AND is_company_default = 1 AND org_id = ?'
   ).get(provider, orgId) as { key_encrypted: string } | undefined;
   return row ? decodeKey(row.key_encrypted) : null;
+}
+
+// Returns all org API keys (decrypted) for container env var injection
+export function getOrgAllApiKeys(orgId: string): { provider: string; key: string }[] {
+  const db = getDb();
+  const rows = db.prepare(
+    'SELECT provider, key_encrypted FROM api_keys WHERE is_company_default = 1 AND org_id = ?'
+  ).all(orgId) as { provider: string; key_encrypted: string }[];
+  return rows.map((r) => ({ provider: r.provider, key: decodeKey(r.key_encrypted) }));
 }

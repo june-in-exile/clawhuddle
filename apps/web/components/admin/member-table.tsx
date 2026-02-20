@@ -186,9 +186,13 @@ export function MemberTable({ initialMembers, tier = 'free' }: Props) {
   };
 
   const openGateway = (member: OrgMember) => {
-    if (!member.gateway_subdomain || !member.gateway_token) return;
+    if (!member.gateway_token) return;
     const { protocol, hostname } = window.location;
-    window.open(`${protocol}//${member.gateway_subdomain}.${hostname}/?token=${member.gateway_token}`, '_blank');
+    if (hostname === 'localhost' && member.gateway_port) {
+      window.open(`http://localhost:${member.gateway_port}/?token=${member.gateway_token}`, '_blank');
+    } else if (member.gateway_subdomain) {
+      window.open(`${protocol}//${member.gateway_subdomain}.${hostname}/?token=${member.gateway_token}`, '_blank');
+    }
   };
 
   const gatewayStatusBadge = (member: OrgMember) => {

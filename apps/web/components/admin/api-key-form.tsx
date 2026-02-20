@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/ui/toast';
+import { PROVIDERS } from '@clawhuddle/shared';
 
 type FetchFn = <T>(path: string, options?: RequestInit) => Promise<T>;
 
@@ -20,8 +21,7 @@ interface Props {
 export function ApiKeyForm({ initialKeys, fetchFn }: Props) {
   const { toast } = useToast();
   const [keys, setKeys] = useState(initialKeys);
-  const [anthropicKey, setAnthropicKey] = useState('');
-  const [openaiKey, setOpenaiKey] = useState('');
+  const [inputs, setInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   const refresh = async () => {
@@ -29,17 +29,32 @@ export function ApiKeyForm({ initialKeys, fetchFn }: Props) {
     setKeys(res.data);
   };
 
-  const saveKey = async (provider: string, key: string, clearFn: (v: string) => void) => {
-    if (!key.trim()) return;
+  const saveKey = async (provider: string) => {
+    const key = inputs[provider]?.trim();
+    if (!key) return;
     setSaving(true);
     try {
       await fetchFn('/api-keys', {
         method: 'POST',
-        body: JSON.stringify({ provider, key: key.trim() }),
+        body: JSON.stringify({ provider, key }),
       });
-      clearFn('');
+      setInputs((prev) => ({ ...prev, [provider]: '' }));
       await refresh();
-      toast(`${provider.charAt(0).toUpperCase() + provider.slice(1)} key saved`, 'success');
+      const label = PROVIDERS.find((p) => p.id === provider)?.label ?? provider;
+      toast(`${label} key saved`, 'success');
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteKey = async (keyId: string, providerLabel: string) => {
+    setSaving(true);
+    try {
+      await fetchFn(`/api-keys/${keyId}`, { method: 'DELETE' });
+      await refresh();
+      toast(`${providerLabel} key deleted`, 'success');
     } catch (err: any) {
       toast(err.message, 'error');
     } finally {
@@ -51,59 +66,79 @@ export function ApiKeyForm({ initialKeys, fetchFn }: Props) {
 
   return (
     <div className="space-y-6 max-w-lg">
-      {[
-        { provider: 'anthropic', label: 'Anthropic', placeholder: 'sk-ant-...', value: anthropicKey, setter: setAnthropicKey },
-        { provider: 'openai', label: 'OpenAI', placeholder: 'sk-...', value: openaiKey, setter: setOpenaiKey },
-      ].map(({ provider, label, placeholder, value, setter }) => (
-        <div
-          key={provider}
-          className="p-5 rounded-xl"
-          style={{
-            background: 'var(--bg-primary)',
-            border: '1px solid var(--border-subtle)',
-          }}
-        >
-          <h3
-            className="text-sm font-semibold mb-1"
-            style={{ color: 'var(--text-primary)' }}
+      {PROVIDERS.map(({ id, label, placeholder, defaultModel }) => {
+        const existing = currentKey(id);
+        return (
+          <div
+            key={id}
+            className="p-5 rounded-xl"
+            style={{
+              background: 'var(--bg-primary)',
+              border: '1px solid var(--border-subtle)',
+            }}
           >
-            {label}
-          </h3>
-          {currentKey(provider) && (
-            <p className="text-xs mb-3" style={{ color: 'var(--text-tertiary)' }}>
-              Current:{' '}
-              <code
-                className="px-1.5 py-0.5 rounded text-[11px] font-mono"
-                style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+            <div className="flex items-baseline justify-between mb-1">
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: 'var(--text-primary)' }}
               >
-                {currentKey(provider)!.key_masked}
-              </code>
-            </p>
-          )}
-          <div className="flex gap-2">
-            <input
-              type="password"
-              value={value}
-              onChange={(e) => setter(e.target.value)}
-              placeholder={placeholder}
-              className="flex-1 px-3 py-2 text-sm rounded-lg"
-            />
-            <button
-              onClick={() => saveKey(provider, value, setter)}
-              disabled={saving}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-              style={{
-                background: 'var(--accent)',
-                color: 'var(--text-inverse)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--accent)'; }}
-            >
-              Save
-            </button>
+                {label}
+              </h3>
+              <span
+                className="text-[11px] font-mono"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                {defaultModel}
+              </span>
+            </div>
+            {existing && (
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  Current:{' '}
+                  <code
+                    className="px-1.5 py-0.5 rounded text-[11px] font-mono"
+                    style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+                  >
+                    {existing.key_masked}
+                  </code>
+                </p>
+                <button
+                  onClick={() => deleteKey(existing.id, label)}
+                  disabled={saving}
+                  className="text-xs px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                  style={{ color: 'var(--text-tertiary)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--error, #ef4444)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={inputs[id] ?? ''}
+                onChange={(e) => setInputs((prev) => ({ ...prev, [id]: e.target.value }))}
+                placeholder={placeholder}
+                className="flex-1 px-3 py-2 text-sm rounded-lg"
+              />
+              <button
+                onClick={() => saveKey(id)}
+                disabled={saving}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--text-inverse)',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--accent)'; }}
+              >
+                Save
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

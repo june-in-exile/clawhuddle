@@ -120,7 +120,27 @@ export interface ImportSkillsRequest {
   skills: { name: string; git_path: string }[];
 }
 
+// === Provider Registry ===
+
+export interface ProviderConfig {
+  id: string;
+  label: string;
+  envVar: string;
+  placeholder: string;
+  /** Model ID used for agents.defaults.model in openclaw.json */
+  defaultModel: string;
+}
+
+export const PROVIDERS: ProviderConfig[] = [
+  { id: 'anthropic', label: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', placeholder: 'sk-ant-...', defaultModel: 'anthropic/claude-sonnet-4-5' },
+  { id: 'openai', label: 'OpenAI', envVar: 'OPENAI_API_KEY', placeholder: 'sk-...', defaultModel: 'openai/gpt-4.1' },
+  { id: 'openrouter', label: 'OpenRouter', envVar: 'OPENROUTER_API_KEY', placeholder: 'sk-or-...', defaultModel: 'openrouter/anthropic/claude-sonnet-4.5' },
+  { id: 'google', label: 'Google Gemini', envVar: 'GEMINI_API_KEY', placeholder: 'AIza...', defaultModel: 'google/gemini-2.5-pro' },
+];
+
+export const PROVIDER_IDS = PROVIDERS.map((p) => p.id);
+
 export interface SetApiKeyRequest {
-  provider: 'anthropic' | 'openai';
+  provider: string;
   key: string;
 }
