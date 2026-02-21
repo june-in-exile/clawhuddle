@@ -111,7 +111,7 @@ export async function authRoutes(app: FastifyInstance) {
 
   // Accept invitation by token
   app.post<{ Body: AcceptInviteRequest }>(
-    '/api/auth/accept-invite',
+    '/api/invitations/accept',
     async (request, reply) => {
       const userId = request.headers['x-user-id'] as string;
       if (!userId) {

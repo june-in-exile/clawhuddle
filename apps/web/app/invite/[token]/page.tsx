@@ -43,7 +43,7 @@ export default function InvitePage() {
     setAccepting(true);
     setError('');
     try {
-      await apiFetch('/api/auth/accept-invite', {
+      await apiFetch('/api/invitations/accept', {
         method: 'POST',
         headers: { 'x-user-id': userId },
         body: JSON.stringify({ token }),
