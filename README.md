@@ -143,22 +143,26 @@ This starts Traefik, the web frontend, the API server, and builds the gateway ba
 
 ## Configuration
 
-| Variable               | Description                          | Default                 |
-| ---------------------- | ------------------------------------ | ----------------------- |
-| `NEXTAUTH_URL`         | Frontend URL                         | `http://localhost:3000` |
-| `NEXTAUTH_SECRET`      | Session encryption secret            | **(required)**          |
-| `ANTHROPIC_API_KEY`    | Default Anthropic API key            | —                       |
-| `SUPER_ADMIN_EMAIL`    | Super admin account email            | —                       |
-| `MAX_MEMBERS_PER_ORG`  | Member limit per organization        | `50`                    |
-| `GOOGLE_CLIENT_ID`     | Google OAuth client ID               | —                       |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret           | —                       |
-| `ALLOWED_DOMAIN`       | Restrict sign-in to email domain     | —                       |
-| `RESEND_API_KEY`       | Resend API key for invitation emails | —                       |
-| `EMAIL_FROM`           | Sender address for emails            | —                       |
-| `DATABASE_PATH`        | SQLite file path                     | `./data/db.sqlite`      |
-| `CORS_ORIGIN`          | Allowed origin for API requests      | `http://localhost:3000` |
-| `DOCKER_NETWORK`       | Docker network name                  | `clawhuddle-net`        |
-| `DOMAIN`               | Production domain (used by Traefik)  | `localhost`             |
+| Variable                    | Description                                                         | Default                 |
+| --------------------------- | ------------------------------------------------------------------- | ----------------------- |
+| `NEXTAUTH_URL`              | Frontend URL                                                        | `http://localhost:3000` |
+| `NEXTAUTH_SECRET`           | Session encryption secret                                           | **(required)**          |
+| `GOOGLE_CLIENT_ID`          | Google OAuth client ID                                              | —                       |
+| `GOOGLE_CLIENT_SECRET`      | Google OAuth client secret                                          | —                       |
+| `ALLOWED_DOMAIN`            | Restrict sign-in to email domain(s), comma-separated (e.g. `company.com,partner.com`) | — |
+| `ANTHROPIC_API_KEY`         | Default Anthropic API key                                           | —                       |
+| `SUPER_ADMIN_EMAIL`         | Super admin account email                                           | —                       |
+| `MAX_MEMBERS_PER_ORG`       | Member limit per organization                                       | `50`                    |
+| `RESEND_API_KEY`            | Resend API key for invitation emails                                | —                       |
+| `EMAIL_FROM`                | Sender address for emails                                           | —                       |
+| `APP_URL`                   | Public app URL, used in invitation email links                      | `http://localhost:3000` |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Support email shown in the settings page                            | —                       |
+| `DATABASE_PATH`             | SQLite file path                                                    | `./data/db.sqlite`      |
+| `CORS_ORIGIN`               | Allowed origin for API requests                                     | `http://localhost:3000` |
+| `DOCKER_NETWORK`            | Docker network name                                                 | `clawhuddle-net`        |
+| `DOMAIN`                    | Production domain (used by Traefik)                                 | `localhost`             |
+| `GATEWAY_DOMAIN`            | Domain for per-user gateway subdomains (e.g. `gw.company.com` → `alice.gw.company.com`) | — |
+| `HOST_DATA_DIR`             | Absolute path on host for Docker bind mounts. Defaults to `$PWD/data`. Override if your data dir is elsewhere. | — |
 
 ## Project Scripts
 
@@ -166,6 +170,7 @@ This starts Traefik, the web frontend, the API server, and builds the gateway ba
 npm run dev          # Start all services in dev mode
 npm run build        # Build all packages
 npm run db:migrate   # Run database migrations
+npm run create-admin # Manually promote a user to super admin
 ```
 
 ## Contributing

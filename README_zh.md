@@ -143,22 +143,26 @@ docker compose up -d
 
 ## 環境變數
 
-| 變數                   | 說明                        | 預設值                  |
-| ---------------------- | --------------------------- | ----------------------- |
-| `NEXTAUTH_URL`         | 前端 URL                    | `http://localhost:3000` |
-| `NEXTAUTH_SECRET`      | Session 加密密鑰            | **（必填）**            |
-| `ANTHROPIC_API_KEY`    | 預設 Anthropic API 金鑰     | —                       |
-| `SUPER_ADMIN_EMAIL`    | 超級管理員 email            | —                       |
-| `MAX_MEMBERS_PER_ORG`  | 每個組織的成員上限          | `50`                    |
-| `GOOGLE_CLIENT_ID`     | Google OAuth 用戶端 ID      | —                       |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 用戶端密鑰     | —                       |
-| `ALLOWED_DOMAIN`       | 限制登入 email 網域         | —                       |
-| `RESEND_API_KEY`       | Resend API 金鑰（邀請信用） | —                       |
-| `EMAIL_FROM`           | 寄件者地址                  | —                       |
-| `DATABASE_PATH`        | SQLite 檔案路徑             | `./data/db.sqlite`      |
-| `CORS_ORIGIN`          | API 允許的來源              | `http://localhost:3000` |
-| `DOCKER_NETWORK`       | Docker 網路名稱             | `clawhuddle-net`        |
-| `DOMAIN`               | 正式環境網域（Traefik 用）  | `localhost`             |
+| 變數                        | 說明                                                                                  | 預設值                  |
+| --------------------------- | ------------------------------------------------------------------------------------- | ----------------------- |
+| `NEXTAUTH_URL`              | 前端 URL                                                                              | `http://localhost:3000` |
+| `NEXTAUTH_SECRET`           | Session 加密密鑰                                                                      | **（必填）**            |
+| `GOOGLE_CLIENT_ID`          | Google OAuth 用戶端 ID                                                                | —                       |
+| `GOOGLE_CLIENT_SECRET`      | Google OAuth 用戶端密鑰                                                               | —                       |
+| `ALLOWED_DOMAIN`            | 限制登入 email 網域，支援逗號分隔多個（例如 `company.com,partner.com`）               | —                       |
+| `ANTHROPIC_API_KEY`         | 預設 Anthropic API 金鑰                                                               | —                       |
+| `SUPER_ADMIN_EMAIL`         | 超級管理員 email                                                                      | —                       |
+| `MAX_MEMBERS_PER_ORG`       | 每個組織的成員上限                                                                    | `50`                    |
+| `RESEND_API_KEY`            | Resend API 金鑰（邀請信用）                                                           | —                       |
+| `EMAIL_FROM`                | 寄件者地址                                                                            | —                       |
+| `APP_URL`                   | 公開應用程式 URL，用於邀請信中的連結                                                  | `http://localhost:3000` |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | 顯示於設定頁面的客服信箱                                                              | —                       |
+| `DATABASE_PATH`             | SQLite 檔案路徑                                                                       | `./data/db.sqlite`      |
+| `CORS_ORIGIN`               | API 允許的來源                                                                        | `http://localhost:3000` |
+| `DOCKER_NETWORK`            | Docker 網路名稱                                                                       | `clawhuddle-net`        |
+| `DOMAIN`                    | 正式環境網域（Traefik 用）                                                            | `localhost`             |
+| `GATEWAY_DOMAIN`            | 每位使用者閘道的子網域基礎（例如 `gw.company.com` → `alice.gw.company.com`）         | —                       |
+| `HOST_DATA_DIR`             | 主機上 Docker bind mount 的絕對路徑。預設為 `$PWD/data`，資料目錄不同時才需要覆蓋。  | —                       |
 
 ## 專案指令
 
@@ -166,6 +170,7 @@ docker compose up -d
 npm run dev          # 啟動所有開發伺服器
 npm run build        # 建置所有套件
 npm run db:migrate   # 執行資料庫遷移
+npm run create-admin # 手動將使用者提升為超級管理員
 ```
 
 ## 貢獻
