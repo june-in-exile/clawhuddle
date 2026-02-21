@@ -698,6 +698,41 @@ export async function approvePairing(
   return output.trim();
 }
 
+/**
+ * Remove all gateway containers and workspace files for an org.
+ * Does NOT touch the DB — caller is responsible for deleting org rows.
+ */
+export async function deleteOrgGateways(orgId: string): Promise<void> {
+  const db = getDb();
+  const members = db
+    .prepare(
+      "SELECT * FROM org_members WHERE org_id = ? AND gateway_port IS NOT NULL",
+    )
+    .all(orgId) as any[];
+
+  for (const member of members) {
+    const containerName = getContainerName(orgId, member.user_id);
+    try {
+      const container = docker.getContainer(containerName);
+      await container.stop().catch(() => {});
+      await container.remove().catch(() => {});
+    } catch {
+      // Container may already be gone
+    }
+
+    const gatewayDir = getGatewayDir(orgId, member.user_id);
+    if (fs.existsSync(gatewayDir)) {
+      fs.rmSync(gatewayDir, { recursive: true });
+    }
+  }
+
+  // Remove the whole org gateway directory if it exists
+  const orgGatewayDir = path.join(getDataDir(), "gateways", orgId);
+  if (fs.existsSync(orgGatewayDir)) {
+    fs.rmSync(orgGatewayDir, { recursive: true });
+  }
+}
+
 /** List pending pairing requests for a channel. */
 export async function listPairingRequests(
   orgId: string,

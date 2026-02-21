@@ -2,7 +2,18 @@ import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/index.js';
 import { v4 as uuid } from 'uuid';
 import { authPlugin } from '../middleware/auth.js';
+import { deleteOrgGateways } from '../services/gateway.js';
 import type { CreateOrgRequest } from '@clawhuddle/shared';
+
+export function purgeOrgFromDb(db: any, orgId: string) {
+  db.prepare('DELETE FROM invitations WHERE org_id = ?').run(orgId);
+  db.prepare('DELETE FROM user_skills WHERE skill_id IN (SELECT id FROM skills WHERE org_id = ?)').run(orgId);
+  db.prepare('DELETE FROM skills WHERE org_id = ?').run(orgId);
+  db.prepare('DELETE FROM api_keys WHERE org_id = ?').run(orgId);
+  db.prepare('UPDATE usage_logs SET org_id = NULL WHERE org_id = ?').run(orgId);
+  db.prepare('DELETE FROM org_members WHERE org_id = ?').run(orgId); // cascades member_channels
+  db.prepare('DELETE FROM organizations WHERE id = ?').run(orgId);
+}
 
 function slugify(name: string): string {
   return name
@@ -56,5 +67,32 @@ export async function orgRoutes(app: FastifyInstance) {
     const org = db.prepare('SELECT * FROM organizations WHERE id = ?').get(orgId);
     return reply.status(201).send({ data: org });
   });
+
+  // Delete organization (admin/owner of that org only)
+  app.delete<{ Params: { orgId: string } }>(
+    '/api/orgs/:orgId',
+    async (request, reply) => {
+      const { orgId } = request.params;
+      const db = getDb();
+
+      const membership = db.prepare(
+        "SELECT role FROM org_members WHERE org_id = ? AND user_id = ? AND status = 'active'"
+      ).get(orgId, request.currentUser!.id) as any;
+
+      if (!membership || !['owner', 'admin'].includes(membership.role)) {
+        return reply.status(403).send({ error: 'forbidden', message: 'Admin or owner access required' });
+      }
+
+      const org = db.prepare('SELECT id FROM organizations WHERE id = ?').get(orgId);
+      if (!org) {
+        return reply.status(404).send({ error: 'not_found', message: 'Organization not found' });
+      }
+
+      await deleteOrgGateways(orgId);
+      purgeOrgFromDb(db, orgId);
+
+      return reply.status(200).send({ data: { deleted: true } });
+    }
+  );
 
 }

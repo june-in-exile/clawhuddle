@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { getDb } from '../db/index.js';
 import { authPlugin } from '../middleware/auth.js';
+import { deleteOrgGateways } from '../services/gateway.js';
+import { purgeOrgFromDb } from './orgs.js';
 
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
@@ -46,6 +48,25 @@ export async function superAdminRoutes(app: FastifyInstance) {
       db.prepare('UPDATE organizations SET tier = ? WHERE id = ?').run(tier, id);
       const updated = db.prepare('SELECT * FROM organizations WHERE id = ?').get(id);
       return { data: updated };
+    }
+  );
+
+  // Delete an organization (removes all gateways + data)
+  app.delete<{ Params: { id: string } }>(
+    '/api/super-admin/orgs/:id',
+    async (request, reply) => {
+      const { id } = request.params;
+      const db = getDb();
+
+      const org = db.prepare('SELECT id FROM organizations WHERE id = ?').get(id);
+      if (!org) {
+        return reply.status(404).send({ error: 'not_found', message: 'Organization not found' });
+      }
+
+      await deleteOrgGateways(id);
+      purgeOrgFromDb(db, id);
+
+      return reply.status(200).send({ data: { deleted: true } });
     }
   );
 
