@@ -20,7 +20,7 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const isSuperAdmin = useSuperAdmin();
-  const confirm = useConfirm();
+  const { confirm } = useConfirm();
 
   const fetchOrgs = () => {
     if (!userId || !isSuperAdmin) return;
