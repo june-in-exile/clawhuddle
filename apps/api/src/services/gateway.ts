@@ -741,6 +741,29 @@ export async function deleteOrgGateways(orgId: string): Promise<void> {
   }
 }
 
+/** Get Docker container IDs for all gateway containers in an org. */
+export async function getOrgContainerIds(orgId: string): Promise<Map<string, string>> {
+  const result = new Map<string, string>(); // userId -> containerId
+  try {
+    const containers = await docker.listContainers({
+      all: true,
+      filters: { name: [`${CONTAINER_PREFIX}${orgId.slice(0, 8)}-`] },
+    });
+    for (const c of containers) {
+      // Container name format: /clawhuddle-gw-{orgId8}-{userId8}
+      const name = c.Names[0]?.replace(/^\//, '') || '';
+      const suffix = name.replace(`${CONTAINER_PREFIX}${orgId.slice(0, 8)}-`, '');
+      if (suffix && suffix !== name) {
+        // Map the 8-char userId prefix back — caller matches against full userId
+        result.set(suffix, c.Id);
+      }
+    }
+  } catch {
+    // Docker may be unavailable
+  }
+  return result;
+}
+
 /** List pending pairing requests for a channel. */
 export async function listPairingRequests(
   orgId: string,

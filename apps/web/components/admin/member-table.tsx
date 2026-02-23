@@ -388,8 +388,23 @@ export function MemberTable({ initialMembers }: Props) {
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    {gatewayStatusBadge(member)}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      {gatewayStatusBadge(member)}
+                    </div>
+                    {(member as any).container_id && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText((member as any).container_id);
+                          toast('Container ID copied', 'success');
+                        }}
+                        className="font-mono text-[10px] truncate max-w-[120px] text-left cursor-pointer hover:underline"
+                        style={{ color: 'var(--text-tertiary)' }}
+                        title={(member as any).container_id}
+                      >
+                        {(member as any).container_id.slice(0, 12)}
+                      </button>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-3">
