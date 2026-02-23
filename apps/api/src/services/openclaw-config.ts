@@ -99,6 +99,7 @@ export function generateOpenClawConfig(options: {
       auth: {
         mode: 'token',
         token,
+        skipDevicePairingForTrustedProxy: true,
       },
       trustedProxies: [
           // Local / private ranges
