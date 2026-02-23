@@ -46,7 +46,7 @@ export interface OpenClawConfig {
     auth: {
       mode: string;
       token: string;
-      skipDevicePairingForTrustedProxy?: boolean;
+
     };
     trustedProxies?: string[];
   };
@@ -100,7 +100,7 @@ export function generateOpenClawConfig(options: {
       auth: {
         mode: 'token',
         token,
-        skipDevicePairingForTrustedProxy: true,
+
       },
       trustedProxies: [
           // Local / private ranges
